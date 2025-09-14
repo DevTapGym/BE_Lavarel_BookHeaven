@@ -41,4 +41,9 @@ class User extends Authenticatable implements JwtSubject
             'password' => 'hashed',
         ];
     }
+
+    public function tokenIsValid($token): bool
+    {
+        return $this->current_token === $token;
+    }
 }

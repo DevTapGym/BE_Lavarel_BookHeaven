@@ -17,6 +17,14 @@ class EnsureTokenIsValid
         try {
             $token = JWTAuth::parseToken();
             $user = $token->authenticate();
+
+            if ($user->current_token !== $token->getToken()) {
+                return $this->errorResponse(
+                    401,
+                    'Unauthorized',
+                    'Token is invalid or not transmitted',
+                );
+            }
         } catch (JWTException $e) {
             return $this->errorResponse(
                 401,
