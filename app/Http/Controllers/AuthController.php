@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Traits\ApiResponse;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 
 class AuthController extends Controller
@@ -29,6 +30,15 @@ class AuthController extends Controller
 
         $user = Auth::user();
         $user->current_token = $token;
+
+        $role = $user->roles()->pluck('name')->first() ?? 'user';
+
+        $customClaims = [
+            'role' => $role,
+            'is_active' => $user->is_active,
+        ];
+
+        $token = JWTAuth::claims($customClaims)->fromUser($user);
 
         $refreshToken = Str::random(64);
         $user->refresh_token = $refreshToken;
@@ -74,12 +84,19 @@ class AuthController extends Controller
 
     public function me()
     {
+        $user = Auth::user();
+
         return $this->successResponse(
             200,
             'Get user info successful',
-            Auth::user(),
+            [
+                'name'      => $user->name,
+                'email'     => $user->email,
+                'is_active' => $user->is_active,
+            ]
         );
     }
+
 
     public function logout()
     {
@@ -119,7 +136,14 @@ class AuthController extends Controller
         }
 
         $token = Auth::login($user);
+        $role = $user->roles()->pluck('name')->first() ?? 'user';
 
+        $customClaims = [
+            'role' => $role,
+            'is_active' => $user->is_active,
+        ];
+
+        $token = JWTAuth::claims($customClaims)->fromUser($user);
         $newRefreshToken = Str::random(64);
         $user->refresh_token = $newRefreshToken;
         $user->save();
