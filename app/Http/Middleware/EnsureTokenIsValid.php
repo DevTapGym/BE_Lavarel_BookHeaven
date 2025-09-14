@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Traits\ApiResponse;
+use Illuminate\Support\Facades\Log;
 
 class EnsureTokenIsValid
 {
@@ -18,11 +19,11 @@ class EnsureTokenIsValid
             $token = JWTAuth::parseToken();
             $user = $token->authenticate();
 
-            if ($user->current_token !== $token->getToken()) {
+            if (trim($user->current_token) !== trim((string)$token->getToken())) {
                 return $this->errorResponse(
                     401,
                     'Unauthorized',
-                    'Token is invalid or not transmitted',
+                    'Token is invalid or has been revoked',
                 );
             }
         } catch (JWTException $e) {
