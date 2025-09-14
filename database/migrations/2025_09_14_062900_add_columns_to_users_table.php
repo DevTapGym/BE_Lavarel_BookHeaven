@@ -12,6 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
+            $table->string('current_token')->nullable();
             $table->string('refresh_token', 255)->nullable();
             $table->boolean('is_active')->default(false);
             $table->string('activation_code')->nullable();
@@ -27,6 +28,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn([
+                'current_token',
                 'refresh_token',
                 'is_active',
                 'activation_code',

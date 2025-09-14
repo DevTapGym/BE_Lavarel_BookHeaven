@@ -28,6 +28,8 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
+        $user->current_token = $token;
+
         $refreshToken = Str::random(64);
         $user->refresh_token = $refreshToken;
         $user->save();
@@ -56,7 +58,7 @@ class AuthController extends Controller
             'password' => bcrypt($request->password),
         ]);
 
-        $user->assignRole('user');
+        $user->assignRole('admin');
 
         return $this->successResponse(
             201,
