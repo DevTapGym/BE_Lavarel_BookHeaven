@@ -10,6 +10,7 @@ use App\Traits\ApiResponse;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Exception;
 
 
 class AuthController extends Controller
@@ -20,7 +21,7 @@ class AuthController extends Controller
     {
         $credentials = $request->validated();
 
-        if (!$token = Auth::attempt($credentials)) {
+        if (!Auth::attempt($credentials)) {
             return $this->errorResponse(
                 401,
                 'Unauthorized',
@@ -29,8 +30,6 @@ class AuthController extends Controller
         }
 
         $user = Auth::user();
-        $user->current_token = $token;
-
         $role = $user->roles()->pluck('name')->first() ?? 'user';
 
         $customClaims = [
@@ -38,16 +37,33 @@ class AuthController extends Controller
             'is_active' => $user->is_active,
         ];
 
-        $token = JWTAuth::claims($customClaims)->fromUser($user);
+        $accessToken = JWTAuth::claims($customClaims)->fromUser($user);
 
-        $refreshToken = Str::random(64);
-        $user->refresh_token = $refreshToken;
+        $refreshTokenPayload = [
+            'sub' => $user->id,
+            'jti' => Str::uuid()->toString(),
+            'type' => 'refresh',
+        ];
+
+        $refreshToken = JWTAuth::getJWTProvider()->encode(
+            array_merge(
+                $refreshTokenPayload,
+                [
+                    'exp' => now()->addDays(14)->timestamp // 14 ngày
+                ]
+            )
+        );
+
+        // Lưu jti của access token vào database
+        $accessPayload = JWTAuth::setToken($accessToken)->getPayload();
+        $accessJti = $accessPayload->get('jti');
+        $user->current_jti = $accessJti;
         $user->save();
 
         return $this->successResponse(
             200,
             'Login successful',
-            $this->formatAuthData($token, $user, $refreshToken),
+            $this->formatAuthData($accessToken, $user, $refreshToken),
         )->cookie(
             'refresh_token',
             $refreshToken,
@@ -101,61 +117,21 @@ class AuthController extends Controller
     public function logout()
     {
         $user = Auth::user();
+
         if ($user) {
-            $user->refresh_token = null;
+            $user->current_jti = null;
             $user->save();
         }
-        Auth::logout();
 
+        Auth::logout();
         return $this->successResponse(
             200,
             'Successfully logged out',
             null
-        );
-    }
-
-    public function refreshToken(Request $request)
-    {
-        $refreshToken = $request->cookie('refresh_token');
-        if (!$refreshToken) {
-            return $this->errorResponse(
-                401,
-                'Unauthorized',
-                'Refresh token not found'
-            );
-        }
-
-        $user = User::where('refresh_token', $refreshToken)->first();
-
-        if (!$user) {
-            return $this->errorResponse(
-                401,
-                'Unauthorized',
-                'Invalid refresh token'
-            );
-        }
-
-        $token = Auth::login($user);
-        $role = $user->roles()->pluck('name')->first() ?? 'user';
-
-        $customClaims = [
-            'role' => $role,
-            'is_active' => $user->is_active,
-        ];
-
-        $token = JWTAuth::claims($customClaims)->fromUser($user);
-        $newRefreshToken = Str::random(64);
-        $user->refresh_token = $newRefreshToken;
-        $user->save();
-
-        return $this->successResponse(
-            200,
-            'Token refreshed',
-            $this->formatAuthData($token, $user, $newRefreshToken)
         )->cookie(
             'refresh_token',
-            $newRefreshToken,
-            60 * 24 * 14,
+            '',
+            -1,
             null,
             null,
             true,
@@ -163,6 +139,67 @@ class AuthController extends Controller
         );
     }
 
+    public function refreshToken(Request $request)
+    {
+        $refreshToken = $request->cookie('refresh_token');
+
+        if (!$refreshToken) {
+            return $this->errorResponse(401, 'Unauthorized', 'Refresh token not found');
+        }
+
+        try {
+            $payload = JWTAuth::getJWTProvider()->decode($refreshToken);
+
+            if (!isset($payload['type']) || $payload['type'] !== 'refresh') {
+                return $this->errorResponse(401, 'Unauthorized', 'Invalid refresh token type');
+            }
+
+            $user = User::find($payload['sub']);
+            if (!$user) {
+                return $this->errorResponse(401, 'Unauthorized', 'User not found');
+            }
+
+            $role = $user->roles()->pluck('name')->first() ?? 'user';
+            $customClaims = [
+                'role' => $role,
+                'is_active' => $user->is_active,
+            ];
+
+            // Tạo access token mới
+            $accessToken = JWTAuth::claims($customClaims)->fromUser($user);
+
+            // Tạo refresh token mới (rotation)
+            $newRefreshTokenPayload = [
+                'sub' => $user->id,
+                'jti' => Str::uuid()->toString(),
+                'type' => 'refresh',
+            ];
+            $newRefreshToken = JWTAuth::getJWTProvider()->encode(
+                array_merge(
+                    $newRefreshTokenPayload,
+                    [
+                        'exp' => now()->addDays(14)->timestamp
+                    ]
+                )
+            );
+
+            return $this->successResponse(
+                200,
+                'Token refreshed',
+                $this->formatAuthData($accessToken, $user, $newRefreshToken)
+            )->cookie(
+                'refresh_token',
+                $newRefreshToken,
+                60 * 24 * 14,
+                null,
+                null,
+                true,
+                true
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(401, 'Unauthorized', 'Invalid or expired refresh token');
+        }
+    }
 
     protected function formatAuthData($token, $user)
     {
@@ -172,7 +209,6 @@ class AuthController extends Controller
             'user' => [
                 'id'    => $user->id,
                 'name'  => $user->name,
-                'is_active' => $user->is_active,
                 'email' => $user->email,
             ]
         ];
