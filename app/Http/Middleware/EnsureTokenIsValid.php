@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Traits\ApiResponse;
-use Illuminate\Support\Facades\Log;
+use App\Models\User;
 
 class EnsureTokenIsValid
 {
@@ -16,21 +16,38 @@ class EnsureTokenIsValid
     public function handle(Request $request, Closure $next)
     {
         try {
+            // Lấy token từ header Authorization
             $token = JWTAuth::parseToken();
-            $user = $token->authenticate();
+            $payload = $token->getPayload();
 
-            if (trim($user->current_token) !== trim((string)$token->getToken())) {
+            // Lấy user id & jti từ payload
+            $userId = $payload->get('sub');
+            $jti = $payload->get('jti');
+
+            // Tìm user trong DB
+            $user = User::find($userId);
+
+            if (!$user || !$user->current_jti) {
                 return $this->errorResponse(
                     401,
                     'Unauthorized',
-                    'Token is invalid or has been revoked',
+                    'Token revoked or user not found'
+                );
+            }
+
+            // So sánh jti trong payload và DB
+            if ($user->current_jti !== $jti) {
+                return $this->errorResponse(
+                    401,
+                    'Unauthorized',
+                    'Token is invalid or has been revoked'
                 );
             }
         } catch (JWTException $e) {
             return $this->errorResponse(
                 401,
                 'Unauthorized',
-                'Token is invalid or not transmitted',
+                'Token is invalid or not transmitted'
             );
         }
 
