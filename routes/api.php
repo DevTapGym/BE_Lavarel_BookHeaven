@@ -13,8 +13,10 @@ Route::prefix('/v1')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/register', [AuthController::class, 'register']);
         Route::post('/refresh', [AuthController::class, 'refreshToken']);
-        Route::post('/activate/send-code', [ActivationController::class, 'sendActivationCode']);
-        Route::post('/activate/verify-code', [ActivationController::class, 'verifyActivationCode']);
+        Route::post('/send-code', [ActivationController::class, 'sendActivationCode']);
+        Route::post('/verify-code', [ActivationController::class, 'verifyActivationCode']);
+        Route::post('/forgot-password', [ActivationController::class, 'forgotPassword']);
+        Route::post('/reset-password', [ActivationController::class, 'resetPassword']);
     });
 });
 

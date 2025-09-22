@@ -35,7 +35,6 @@ class EnsureTokenIsValid
                 );
             }
 
-            // So sánh jti trong payload và DB
             if ($user->current_jti !== $jti) {
                 return $this->errorResponse(
                     401,

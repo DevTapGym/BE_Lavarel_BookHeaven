@@ -17,6 +17,19 @@ return new class extends Migration
             $table->string('activation_code')->nullable();
             $table->timestamp('activation_expires_at')->nullable();
             $table->timestamp('last_activation_sent_at')->nullable();
+
+            $table->foreignId('employee_id')
+                ->nullable()
+                ->constrained('employees')
+                ->default(null)
+                ->nullOnDelete();
+
+
+            $table->foreignId('customer_id')
+                ->nullable()
+                ->constrained('customers')
+                ->default(null)
+                ->nullOnDelete();
         });
     }
 

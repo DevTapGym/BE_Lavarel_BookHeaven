@@ -165,10 +165,8 @@ class AuthController extends Controller
                 'is_active' => $user->is_active,
             ];
 
-            // Tạo access token mới
             $accessToken = JWTAuth::claims($customClaims)->fromUser($user);
 
-            // Tạo refresh token mới (rotation)
             $newRefreshTokenPayload = [
                 'sub' => $user->id,
                 'jti' => Str::uuid()->toString(),
@@ -210,6 +208,7 @@ class AuthController extends Controller
                 'id'    => $user->id,
                 'name'  => $user->name,
                 'email' => $user->email,
+                'is_active' => $user->is_active,
             ]
         ];
 
