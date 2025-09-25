@@ -14,6 +14,9 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Administrator',
                 'password' => bcrypt('123456'),
+                'is_active' => true,
+                'employee_id' => null,
+                'customer_id' => null,
             ]
         );
         $admin->assignRole('admin');

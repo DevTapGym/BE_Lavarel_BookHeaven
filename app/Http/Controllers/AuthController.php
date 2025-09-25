@@ -15,7 +15,6 @@ use Exception;
 
 class AuthController extends Controller
 {
-    use ApiResponse;
 
     public function login(LoginRequest $request)
     {
@@ -113,30 +112,38 @@ class AuthController extends Controller
         );
     }
 
-
-    public function logout()
+    public function logout(Request $request)
     {
-        $user = Auth::user();
+        try {
+            $token = $request->bearerToken();
 
-        if ($user) {
-            $user->current_jti = null;
-            $user->save();
+            if ($token) {
+                JWTAuth::invalidate($token);
+            }
+
+            $user = Auth::user();
+            if ($user) {
+                $user->current_jti = null;
+                $user->save();
+            }
+
+            Auth::logout();
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Successfully logged out',
+            ])->cookie(
+                'refresh_token',
+                '',
+                -1,
+                null,
+                null,
+                true,
+                true
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(500, 'Internal server error', 'Could not logout: ' . $e->getMessage());
         }
-
-        Auth::logout();
-        return $this->successResponse(
-            200,
-            'Successfully logged out',
-            null
-        )->cookie(
-            'refresh_token',
-            '',
-            -1,
-            null,
-            null,
-            true,
-            true
-        );
     }
 
     public function refreshToken(Request $request)
@@ -165,10 +172,8 @@ class AuthController extends Controller
                 'is_active' => $user->is_active,
             ];
 
-            // Tạo access token mới
             $accessToken = JWTAuth::claims($customClaims)->fromUser($user);
 
-            // Tạo refresh token mới (rotation)
             $newRefreshTokenPayload = [
                 'sub' => $user->id,
                 'jti' => Str::uuid()->toString(),
@@ -210,6 +215,7 @@ class AuthController extends Controller
                 'id'    => $user->id,
                 'name'  => $user->name,
                 'email' => $user->email,
+                'is_active' => $user->is_active,
             ]
         ];
 
