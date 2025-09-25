@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ActivationController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\BookFeatureController;
+use App\Http\Controllers\BookImageController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
@@ -28,6 +30,8 @@ Route::prefix('/v1')->group(function () {
         Route::get('/', [BookController::class, 'indexPaginated']);
         Route::get('/{book}', [BookController::class, 'show']);
         Route::get('/category/{category_id}', [BookController::class, 'getBooksByCategory']);
+        Route::get('/feature/{book_id}', [BookFeatureController::class, 'index'])->name('view.book.features');
+        Route::get('/images/{book_id}', [BookImageController::class, 'getBookImages'])->name('view.book.images');
     });
 
     Route::prefix('/category')->group(function () {
@@ -74,9 +78,19 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::post('/', [BookController::class, 'store'])->name('create.book');
         Route::put('/', [BookController::class, 'update'])->name('update.book');
         Route::delete('/{book}', [BookController::class, 'destroy'])->name('delete.book');
+        // category
         Route::post('/attach-categories', [BookController::class, 'attachCategories'])->name('attach.book.categories');
         Route::put('/sync-categories', [BookController::class, 'syncCategories'])->name('sync.book.categories');
         Route::delete('/detach-categories', [BookController::class, 'detachCategories'])->name('detach.book.categories');
+        // images
+        Route::post('/images', [BookImageController::class, 'addBookImages'])->name('add.book.images');
+        Route::delete('/images/{image_id}', [BookImageController::class, 'deleteBookImage'])->name('delete.book.image');
+        Route::delete('/images/book/{book_id}', [BookImageController::class, 'deleteAllBookImages'])->name('delete.book.all.images');
+        // featured
+        Route::post('/feature', [BookFeatureController::class, 'store'])->name('add.book.feature');
+        Route::put('/feature', [BookFeatureController::class, 'update'])->name('update.book.feature');
+        Route::delete('/feature/{feature_id}', [BookFeatureController::class, 'destroy'])->name('delete.book.feature');
+        Route::delete('/feature/book/{book_id}', [BookFeatureController::class, 'destroyAll'])->name('delete.all.book.features');
     });
 
     Route::prefix('/category')->group(function () {
