@@ -3,10 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ActivationController;
+use App\Http\Controllers\BookController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\EmployeeController;
-use App\Models\Employee;
 
 // ---------------------
 // Public routes 
@@ -21,6 +22,16 @@ Route::prefix('/v1')->group(function () {
         Route::post('/verify-code', [ActivationController::class, 'verifyActivationCode']);
         Route::post('/forgot-password', [ActivationController::class, 'forgotPassword']);
         Route::post('/reset-password', [ActivationController::class, 'resetPassword']);
+    });
+
+    Route::prefix('/book')->group(function () {
+        Route::get('/', [BookController::class, 'indexPaginated']);
+        Route::get('/{book}', [BookController::class, 'show']);
+        Route::get('/category/{category_id}', [BookController::class, 'getBooksByCategory']);
+    });
+
+    Route::prefix('/category')->group(function () {
+        Route::get('/', [CategoryController::class, 'indexPaginated']);
     });
 });
 
@@ -54,8 +65,23 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
     Route::prefix('/cart')->group(function () {
         Route::get('/{customer_id}', [CartController::class, 'getCartItemsByCustomer'])->name('view.cart.items');
         Route::post('/', [CartController::class, 'store'])->name('create.cart');
-        Route::post('/add-item', [CartController::class, 'addItemToCart'])->name('add.cart.item');
-        Route::put('/update-item/{cart_item_id}', [CartController::class, 'updateCartItem'])->name('update.cart.item');
-        Route::delete('/remove-item/{cart_item_id}', [CartController::class, 'removeCartItem'])->name('remove.cart.item');
+        Route::post('/add', [CartController::class, 'addItemCart'])->name('add.cart.item');
+        Route::put('/update/{cart_item_id}', [CartController::class, 'updateCartItem'])->name('update.cart.item');
+        Route::delete('/remove/{cart_item_id}', [CartController::class, 'removeItemCart'])->name('remove.cart.item');
+    });
+
+    Route::prefix('/book')->group(function () {
+        Route::post('/', [BookController::class, 'store'])->name('create.book');
+        Route::put('/', [BookController::class, 'update'])->name('update.book');
+        Route::delete('/{book}', [BookController::class, 'destroy'])->name('delete.book');
+        Route::post('/attach-categories', [BookController::class, 'attachCategories'])->name('attach.book.categories');
+        Route::put('/sync-categories', [BookController::class, 'syncCategories'])->name('sync.book.categories');
+        Route::delete('/detach-categories', [BookController::class, 'detachCategories'])->name('detach.book.categories');
+    });
+
+    Route::prefix('/category')->group(function () {
+        Route::post('/', [CategoryController::class, 'store'])->name('create.category');
+        Route::put('/', [CategoryController::class, 'update'])->name('update.category');
+        Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('delete.category');
     });
 });

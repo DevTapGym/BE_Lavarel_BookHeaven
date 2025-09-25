@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Book;
+use App\Http\Resources\CartItemResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -42,9 +43,13 @@ class CartController extends Controller
     public function getCartItemsByCustomer($customer_id)
     {
         try {
-            $cart = Cart::with('cartItems')->where('customer_id', $customer_id)->first();
+            $cart = Cart::with('cartItems.book')->where('customer_id', $customer_id)->first();
             if (! $cart) {
-                return $this->errorResponse(404, 'Cart not found');
+                return $this->errorResponse(
+                    404,
+                    'Not Found',
+                    'Cart not found'
+                );
             }
 
 
@@ -54,7 +59,7 @@ class CartController extends Controller
                 [
                     'total_items' => $cart->count,
                     'total_price' => $cart->total_price,
-                    'items' => $cart->cartItems,
+                    'items' => CartItemResource::collection($cart->cartItems),
                 ]
             );
         } catch (Throwable $th) {
@@ -67,7 +72,7 @@ class CartController extends Controller
     }
 
 
-    public function addItemToCart(Request $request)
+    public function addItemCart(Request $request)
     {
         try {
             $validated = $request->validate([
@@ -147,7 +152,7 @@ class CartController extends Controller
         }
     }
 
-    public function removeItemToCart($cart_item_id)
+    public function removeItemCart($cart_item_id)
     {
         try {
             $cartItem = CartItem::findOrFail($cart_item_id);

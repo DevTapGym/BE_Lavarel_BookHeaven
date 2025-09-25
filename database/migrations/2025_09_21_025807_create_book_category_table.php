@@ -16,6 +16,8 @@ return new class extends Migration
             $table->timestamps();
             $table->foreignId('book_id')->constrained('books');
             $table->foreignId('category_id')->constrained('categories');
+
+            $table->unique(['book_id', 'category_id']);
         });
     }
 
