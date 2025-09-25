@@ -34,6 +34,29 @@ class PermissionSeeder extends Seeder
             ['name' => 'add cart item', 'guard_name' => 'api', 'apiPath' => '/v1/cart/add-item', 'method' => 'POST', 'module' => 'Cart'],
             ['name' => 'update cart item', 'guard_name' => 'api', 'apiPath' => '/v1/cart/update-item/{cart_item_id}', 'method' => 'PUT', 'module' => 'Cart'],
             ['name' => 'remove cart item', 'guard_name' => 'api', 'apiPath' => '/v1/cart/remove-item/{cart_item_id}', 'method' => 'DELETE', 'module' => 'Cart'],
+
+            ['name' => 'create book', 'guard_name' => 'api', 'apiPath' => '/v1/book', 'method' => 'POST', 'module' => 'Book'],
+            ['name' => 'update book', 'guard_name' => 'api', 'apiPath' => '/v1/book', 'method' => 'PUT', 'module' => 'Book'],
+            ['name' => 'delete book', 'guard_name' => 'api', 'apiPath' => '/v1/book/{book}', 'method' => 'DELETE', 'module' => 'Book'],
+            ['name' => 'attach book categories', 'guard_name' => 'api', 'apiPath' => '/v1/book/attach-categories', 'method' => 'POST', 'module' => 'Book'],
+            ['name' => 'sync book categories', 'guard_name' => 'api', 'apiPath' => '/v1/book/sync-categories', 'method' => 'PUT', 'module' => 'Book'],
+            ['name' => 'detach book categories', 'guard_name' => 'api', 'apiPath' => '/v1/book/detach-categories', 'method' => 'DELETE', 'module' => 'Book'],
+
+            ['name' => 'create category', 'guard_name' => 'api', 'apiPath' => '/v1/category', 'method' => 'POST', 'module' => 'Category'],
+            ['name' => 'update category', 'guard_name' => 'api', 'apiPath' => '/v1/category', 'method' => 'PUT', 'module' => 'Category'],
+            ['name' => 'delete category', 'guard_name' => 'api', 'apiPath' => '/v1/category/{category}', 'method' => 'DELETE', 'module' => 'Category'],
+
+            ['name' => 'view book images', 'guard_name' => 'api', 'apiPath' => '/v1/book/images/{book_id}', 'method' => 'GET', 'module' => 'BookImage'],
+            ['name' => 'add book images', 'guard_name' => 'api', 'apiPath' => '/v1/book/images', 'method' => 'POST', 'module' => 'BookImage'],
+            ['name' => 'delete book image', 'guard_name' => 'api', 'apiPath' => '/v1/book/images/{image_id}', 'method' => 'DELETE', 'module' => 'BookImage'],
+            ['name' => 'delete all book images', 'guard_name' => 'api', 'apiPath' => '/v1/book/images/book/{book_id}', 'method' => 'DELETE', 'module' => 'BookImage'],
+
+            ['name' => 'view book features', 'guard_name' => 'api', 'apiPath' => '/v1/book/feature/{book_id}', 'method' => 'GET', 'module' => 'BookFeature'],
+            ['name' => 'add book feature', 'guard_name' => 'api', 'apiPath' => '/v1/book/feature', 'method' => 'POST', 'module' => 'BookFeature'],
+            ['name' => 'update book feature', 'guard_name' => 'api', 'apiPath' => '/v1/book/feature', 'method' => 'PUT', 'module' => 'BookFeature'],
+            ['name' => 'delete book feature', 'guard_name' => 'api', 'apiPath' => '/v1/book/feature/{feature_id}', 'method' => 'DELETE', 'module' => 'BookFeature'],
+            ['name' => 'delete all book features', 'guard_name' => 'api', 'apiPath' => '/v1/book/feature/book/{book_id}', 'method' => 'DELETE', 'module' => 'BookFeature'],
+
         ];
 
         $added = false;

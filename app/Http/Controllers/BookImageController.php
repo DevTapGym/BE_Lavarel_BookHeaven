@@ -4,62 +4,92 @@ namespace App\Http\Controllers;
 
 use App\Models\BookImage;
 use Illuminate\Http\Request;
+use App\Models\Book;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 
 class BookImageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function getBookImages($book_id)
     {
-        //
+        $book = Book::with('bookImages')->findOrFail($book_id);
+
+        return $this->successResponse(
+            200,
+            'Book images retrieved successfully',
+            $book->bookImages
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function addBookImages(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'book_id'  => 'required|exists:books,id',
+            'images'   => 'required|array',
+            'images.*' => 'required|url',
+        ]);
+
+        try {
+            $book = Book::findOrFail($validated['book_id']);
+
+            $createdImages = [];
+            DB::transaction(function () use ($book, $validated, &$createdImages) {
+                foreach ($validated['images'] as $url) {
+                    $createdImages[] = $book->bookImages()->create(['url' => $url]);
+                }
+            });
+
+            return $this->successResponse(
+                201,
+                'Images added successfully',
+                $createdImages
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error adding images',
+                $th->getMessage()
+            );
+        }
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function deleteBookImage($image_id)
     {
-        //
+        try {
+            $image = BookImage::findOrFail($image_id);
+            $image->delete();
+
+            return $this->successResponse(
+                200,
+                'Image deleted successfully',
+                null
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error deleting image',
+                $th->getMessage()
+            );
+        }
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(BookImage $bookImage)
+    public function deleteAllBookImages($book_id)
     {
-        //
-    }
+        try {
+            $book = Book::findOrFail($book_id);
+            $book->bookImages()->delete();
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(BookImage $bookImage)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, BookImage $bookImage)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(BookImage $bookImage)
-    {
-        //
+            return $this->successResponse(
+                200,
+                'All images deleted successfully',
+                null
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error deleting all images',
+                $th->getMessage()
+            );
+        }
     }
 }

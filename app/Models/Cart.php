@@ -8,17 +8,16 @@ class Cart extends Model
 {
     protected $fillable = [
         'customer_id',
-        'book_id',
         'quantity',
         'total_price',
     ];
 
-    public function user()
+    public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Customer::class,);
     }
 
-    public function cartItem()
+    public function cartItems()
     {
         return $this->hasMany(CartItem::class);
     }

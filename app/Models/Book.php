@@ -18,6 +18,11 @@ class Book extends Model
         'sale_off',
     ];
 
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'book_category', 'book_id', 'category_id');
+    }
+
     public function bookFeatures()
     {
         return $this->hasMany(BookFeature::class);
@@ -28,10 +33,6 @@ class Book extends Model
         return $this->hasMany(BookImage::class);
     }
 
-    public function bookCategories()
-    {
-        return $this->hasMany(BookCategory::class);
-    }
 
     public function cartItems()
     {
