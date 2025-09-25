@@ -23,6 +23,7 @@ return new class extends Migration
             $table->integer('sold')->default(0);
             $table->double('sale_off')->default(0);
             $table->boolean('is_active')->default(true);
+            $table->string('author');
         });
     }
 

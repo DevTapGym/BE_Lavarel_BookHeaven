@@ -46,4 +46,9 @@ class User extends Authenticatable implements JwtSubject
     {
         return $this->current_token === $token;
     }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }
