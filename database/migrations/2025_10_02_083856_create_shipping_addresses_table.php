@@ -16,7 +16,6 @@ return new class extends Migration
             $table->timestamps();
             $table->string('recipient_name');
             $table->string('address');
-
             $table->string('phone_number');
             $table->boolean('is_default')->default(false);
 

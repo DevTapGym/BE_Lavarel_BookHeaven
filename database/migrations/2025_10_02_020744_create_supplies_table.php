@@ -20,6 +20,8 @@ return new class extends Migration
 
             $table->foreignId('supplier_id')->constrained('suppliers');
             $table->foreignId('book_id')->constrained('books');
+
+            $table->unique(['supplier_id', 'book_id']);
         });
     }
 

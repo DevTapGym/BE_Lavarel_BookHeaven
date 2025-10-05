@@ -3,63 +3,70 @@
 namespace App\Http\Controllers;
 
 use App\Models\PaymentMethod;
+
 use Illuminate\Http\Request;
 
 class PaymentMethodController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index()
     {
-        //
+        $methods = PaymentMethod::all();
+        return $this->successResponse(
+            200,
+            'Payment methods retrieved successfully',
+            $methods
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'name'      => 'required|string|max:255',
+            'is_active' => 'boolean',
+            'provider'  => 'nullable|string|max:255',
+            'type'      => 'nullable|string|max:100',
+            'logo_url'  => 'nullable|url',
+        ]);
+
+        $method = PaymentMethod::create($validated);
+
+        return $this->successResponse(
+            201,
+            'Payment method created successfully',
+            $method
+        );
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(PaymentMethod $paymentMethod)
+    public function update(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'id'        => 'required|integer|exists:payment_methods,id',
+            'name'      => 'sometimes|string|max:255',
+            'is_active' => 'boolean',
+            'provider'  => 'nullable|string|max:255',
+            'type'      => 'nullable|string|max:100',
+            'logo_url'  => 'nullable|url',
+        ]);
+
+        $method = PaymentMethod::find($validated['id']);
+        $method->update($validated);
+
+        return $this->successResponse(
+            200,
+            'Payment method updated successfully',
+            $method
+        );
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(PaymentMethod $paymentMethod)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, PaymentMethod $paymentMethod)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(PaymentMethod $paymentMethod)
     {
-        //
+        $paymentMethod->delete();
+
+        return $this->successResponse(
+            200,
+            'Payment method deleted successfully',
+            null,
+        );
     }
 }

@@ -21,4 +21,9 @@ class Employee extends Model
         'date_of_birth' => 'date',
         'hire_date' => 'date',
     ];
+
+    public function importReceipts()
+    {
+        return $this->hasMany(ImportReceipt::class);
+    }
 }

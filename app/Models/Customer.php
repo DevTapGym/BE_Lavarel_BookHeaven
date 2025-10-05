@@ -19,8 +19,13 @@ class Customer extends Model
         return $this->hasOne(User::class);
     }
 
-    public function carts()
+    public function cart()
     {
         return $this->hasOne(Cart::class);
+    }
+
+    public function shippingAddresses()
+    {
+        return $this->hasMany(ShippingAddress::class);
     }
 }

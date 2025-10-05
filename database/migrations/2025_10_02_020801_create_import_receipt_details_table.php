@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->timestamps();
             $table->integer('quantity')->default(1);
-            $table->decimal('total_price', 15, 2)->default(0);
+            $table->decimal('price', 15, 2)->default(0);
 
             $table->foreignId('import_receipt_id')
                 ->constrained('import_receipts')

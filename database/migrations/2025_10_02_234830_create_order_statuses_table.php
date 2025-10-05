@@ -16,7 +16,7 @@ return new class extends Migration
             $table->timestamps();
             $table->string('name')->unique();
             $table->text('description')->nullable();
-            $table->integer('sequence')->default(0);
+            $table->integer('sequence')->default(0)->unique();
         });
     }
 

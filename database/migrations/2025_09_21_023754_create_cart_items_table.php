@@ -17,6 +17,7 @@ return new class extends Migration
 
             $table->integer('quantity')->default(1);
             $table->decimal('price', 10, 2)->default(0);
+            $table->boolean('is_selected')->default(true);
 
             $table->foreignId('cart_id')->constrained('carts');
             $table->foreignId('book_id')->constrained('books');

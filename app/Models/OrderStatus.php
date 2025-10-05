@@ -4,14 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class PaymentMethod extends Model
+class OrderStatus extends Model
 {
     protected $fillable = [
         'name',
-        'is_active',
-        'provider',
-        'type',
-        'logo_url',
+        'description',
+        'sequence',
     ];
 
     protected $hidden = [

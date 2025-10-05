@@ -9,6 +9,7 @@ use App\Http\Resources\CartItemResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Exception;
 
 use Throwable;
 
@@ -52,7 +53,6 @@ class CartController extends Controller
                 );
             }
 
-
             return $this->successResponse(
                 200,
                 'Cart items retrieved successfully',
@@ -70,7 +70,6 @@ class CartController extends Controller
             );
         }
     }
-
 
     public function addItemCart(Request $request)
     {
@@ -96,11 +95,19 @@ class CartController extends Controller
                     ->first();
 
                 if ($existing) {
-                    $existing->quantity = $existing->quantity + $validated['quantity'];
+                    $newQuantity = $existing->quantity + $validated['quantity'];
+
+                    // Kiểm tra stock với số lượng tổng
+                    $this->validateBookStock($book, $newQuantity, 'add');
+
+                    $existing->quantity = $newQuantity;
                     $existing->price = $book->price * $existing->quantity;
                     $existing->save();
                     $cartItem = $existing;
                 } else {
+                    // Kiểm tra stock cho item mới
+                    $this->validateBookStock($book, $validated['quantity'], 'add');
+
                     $payload = [
                         'cart_id' => $cartId,
                         'book_id' => $validated['book_id'],
@@ -127,7 +134,8 @@ class CartController extends Controller
     {
         try {
             $validated = $request->validate([
-                'quantity' => 'required|integer|min:1',
+                'quantity' => 'sometimes|integer|min:1',
+                'is_selected' => 'sometimes|boolean',
             ]);
 
             $cartItem = CartItem::findOrFail($cart_item_id);
@@ -137,10 +145,21 @@ class CartController extends Controller
             }
 
             DB::transaction(function () use ($cartItem, $book, $validated) {
-                $cartItem->quantity = $validated['quantity'];
-                $cartItem->price = $book->price * $validated['quantity'];
-                $cartItem->save();
+                // Nếu có cập nhật quantity
+                if (isset($validated['quantity'])) {
+                    // Kiểm tra stock
+                    $this->validateBookStock($book, $validated['quantity'], 'update');
 
+                    $cartItem->quantity = $validated['quantity'];
+                    $cartItem->price = $book->price * $validated['quantity'];
+                }
+
+                // Nếu có cập nhật is_selected
+                if (isset($validated['is_selected'])) {
+                    $cartItem->is_selected = $validated['is_selected'];
+                }
+
+                $cartItem->save();
                 $this->updateCartTotals($cartItem->cart_id);
             });
 
@@ -183,6 +202,21 @@ class CartController extends Controller
             $cart->total_price = $cart->cartItems->sum('price');
             $cart->count = $cart->cartItems->count();
             $cart->save();
+        }
+    }
+
+    /**
+     * Validate book availability and stock
+     */
+    private function validateBookStock($book, $requestedQuantity, $action = 'add')
+    {
+        if (!$book->is_active) {
+            throw new Exception("Book '{$book->title}' is no longer available for sale");
+        }
+
+        if ($requestedQuantity > $book->quantity) {
+            $actionText = $action === 'add' ? 'add' : 'update to';
+            throw new Exception("Book '{$book->title}' has only {$book->quantity} copies available, but you're trying to {$actionText} {$requestedQuantity} copies");
         }
     }
 }

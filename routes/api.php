@@ -10,6 +10,15 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\SupplyController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\ImportReceiptController;
+use App\Http\Controllers\AddressTagController;
+use App\Http\Controllers\ShippingAddressController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OrderStatusController;
+use App\Http\Controllers\PaymentMethodController;
+use App\Http\Controllers\OrderStatusHistoryController;
 
 // ---------------------
 // Public routes 
@@ -97,5 +106,73 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::post('/', [CategoryController::class, 'store'])->name('create.category');
         Route::put('/', [CategoryController::class, 'update'])->name('update.category');
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('delete.category');
+    });
+
+    Route::prefix('/supplier')->group(function () {
+        Route::get('/', [SupplierController::class, 'indexPaginated'])->name('view.suppliers');
+        Route::get('/{supplier}', [SupplierController::class, 'show'])->name('show.supplier');
+        Route::get('/{id}/books', [SupplierController::class, 'getBooksBySupplier'])->name('show.supplier.books');
+        Route::get('/{id}/supplies', [SupplierController::class, 'getSuppliesBySupplier'])->name('show.supplier.supplies');
+        Route::post('/', [SupplierController::class, 'store'])->name('create.supplier');
+        Route::put('/', [SupplierController::class, 'update'])->name('update.supplier');
+        Route::delete('/{supplier}', [SupplierController::class, 'destroy'])->name('delete.supplier');
+    });
+
+    Route::prefix('/supply')->group(function () {
+        Route::get('/', [SupplyController::class, 'indexPaginated'])->name('view.supplies');
+        Route::get('/fetch-supply', [SupplyController::class, 'getByBookAndSupplier'])->name('show.supply');
+        Route::post('/', [SupplyController::class, 'store'])->name('create.supply');
+        Route::put('/', [SupplyController::class, 'update'])->name('update.supply');
+        Route::delete('/{supply}', [SupplyController::class, 'destroy'])->name('delete.supply');
+    });
+
+    Route::prefix('/import-receipt')->group(function () {
+        Route::get('/', [ImportReceiptController::class, 'indexPaginated'])->name('view.import.receipts');
+        Route::get('/{import_receipt}', [ImportReceiptController::class, 'show'])->name('show.import.receipt');
+        Route::post('/', [ImportReceiptController::class, 'store'])->name('create.import.receipt');
+        Route::put('/', [ImportReceiptController::class, 'update'])->name('update.import.receipt');
+    });
+
+    Route::prefix('/address-tag')->group(function () {
+        Route::get('/', [AddressTagController::class, 'index'])->name('view.address.tags');
+        Route::post('/', [AddressTagController::class, 'store'])->name('create.address.tag');
+        Route::put('/', [AddressTagController::class, 'update'])->name('update.address.tag');
+        Route::delete('/{addressTag}', [AddressTagController::class, 'destroy'])->name('delete.address.tag');
+    });
+
+    Route::prefix('/address')->group(function () {
+        Route::get('/customer/{customer_id}', [ShippingAddressController::class, 'getAddressesByCustomer'])->name('view.customer.addresses');
+        Route::post('/', [ShippingAddressController::class, 'store'])->name('create.shipping.address');
+        Route::put('/', [ShippingAddressController::class, 'update'])->name('update.shipping.address');
+        Route::delete('/{id}', [ShippingAddressController::class, 'destroy'])->name('delete.shipping.address');
+    });
+
+    Route::prefix('/payment-method')->group(function () {
+        Route::get('/', [PaymentMethodController::class, 'index'])->name('view.payment.methods');
+        Route::post('/', [PaymentMethodController::class, 'store'])->name('create.payment.method');
+        Route::put('/', [PaymentMethodController::class, 'update'])->name('update.payment.method');
+        Route::delete('/{paymentMethod}', [PaymentMethodController::class, 'destroy'])->name('delete.payment.method');
+    });
+
+    Route::prefix('/order')->group(function () {
+        Route::get('/', [OrderController::class, 'indexPaginated'])->name('view.orders');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show.order');
+        Route::get('/user/{userId}', [OrderController::class, 'getOrdersByUser'])->name('view.user.orders');
+        Route::post('/create', [OrderController::class, 'createOrder'])->name('create.order');
+        Route::post('/place', [OrderController::class, 'placeOrder'])->name('place.order');
+    });
+
+    Route::prefix('/order-status')->group(function () {
+        Route::get('/', [OrderStatusController::class, 'index'])->name('view.order.statuses');
+        Route::post('/', [OrderStatusController::class, 'store'])->name('create.order.status');
+        Route::put('/', [OrderStatusController::class, 'update'])->name('update.order.status');
+        Route::delete('/{orderStatus}', [OrderStatusController::class, 'destroy'])->name('delete.order.status');
+    });
+
+    Route::prefix('/order-status-history')->group(function () {
+        Route::get('/order/{orderId}', [OrderStatusHistoryController::class, 'indexByOrder'])->name('view.order.status.histories');
+        Route::post('/', [OrderStatusHistoryController::class, 'store'])->name('create.order.status.history');
+        Route::put('/', [OrderStatusHistoryController::class, 'update'])->name('update.order.status.history');
+        Route::delete('/{orderStatusHistory}', [OrderStatusHistoryController::class, 'destroy'])->name('delete.order.status.history');
     });
 });

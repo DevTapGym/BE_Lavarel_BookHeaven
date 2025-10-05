@@ -16,9 +16,11 @@ return new class extends Migration
             $table->timestamps();
             $table->userstamps();
             $table->text('note')->nullable();
-            
+
             $table->foreignId('order_id')->constrained('orders');
             $table->foreignId('order_status_id')->constrained('order_statuses');
+
+            $table->unique(['order_id', 'order_status_id']);
         });
     }
 
