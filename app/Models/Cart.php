@@ -8,7 +8,7 @@ class Cart extends Model
 {
     protected $fillable = [
         'customer_id',
-        'quantity',
+        'count',
         'total_price',
     ];
 

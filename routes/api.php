@@ -41,6 +41,7 @@ Route::prefix('/v1')->group(function () {
 
     Route::prefix('/book')->group(function () {
         Route::get('/', [BookController::class, 'indexPaginated']);
+        Route::get('/popular', [BookController::class, 'getPopularBooks']);
         Route::get('/{book}', [BookController::class, 'show']);
         Route::get('/category/{category_id}', [BookController::class, 'getBooksByCategory']);
         Route::get('/feature/{book_id}', [BookFeatureController::class, 'index'])->name('view.book.features');

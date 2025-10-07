@@ -105,7 +105,7 @@ class AuthController extends Controller
             // Tạo Cart cho Customer
             Cart::create([
                 'customer_id' => $customer->id,
-                'quantity'    => 0,
+                'count'    => 0,
                 'total_price' => 0,
             ]);
 

@@ -34,6 +34,20 @@ class BookController extends Controller
         );
     }
 
+    public function getPopularBooks()
+    {
+        $books = Book::where('is_active', true)
+            ->orderBy('sold', 'desc')
+            ->take(5)
+            ->get();
+
+        return $this->successResponse(
+            200,
+            'Popular books retrieved successfully',
+            $books
+        );
+    }
+
     public function store(Request $request)
     {
         try {
