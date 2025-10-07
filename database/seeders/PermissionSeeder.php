@@ -106,6 +106,32 @@ class PermissionSeeder extends Seeder
             ['name' => 'show order', 'guard_name' => 'api', 'apiPath' => '/v1/order/{order}', 'method' => 'GET', 'module' => 'Order'],
             ['name' => 'create order', 'guard_name' => 'api', 'apiPath' => '/v1/order/create', 'method' => 'POST', 'module' => 'Order'],
             ['name' => 'place order', 'guard_name' => 'api', 'apiPath' => '/v1/order/place', 'method' => 'POST', 'module' => 'Order'],
+
+            ['name' => 'view roles', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'GET', 'module' => 'Role'],
+            ['name' => 'show role', 'guard_name' => 'api', 'apiPath' => '/v1/role/{role}', 'method' => 'GET', 'module' => 'Role'],
+            ['name' => 'create role', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'POST', 'module' => 'Role'],
+            ['name' => 'update role', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'PUT', 'module' => 'Role'],
+            ['name' => 'delete role', 'guard_name' => 'api', 'apiPath' => '/v1/role/{role}', 'method' => 'DELETE', 'module' => 'Role'],
+
+            ['name' =>  'view permissions',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'show permission by id',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission/id',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'show permission by name',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission/name',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'create permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission',  'method'  =>  'POST',  'module'  =>  'Permission'],
+            ['name' =>  'update permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission',  'method'  =>  'PUT',  'module'  =>  'Permission'],
+            ['name' =>  'delete permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission/{permission}',  'method'  =>  'DELETE',  'module'  =>  'Permission'],
+
+            ['name' => 'view accounts', 'guard_name' => 'api', 'apiPath' => '/v1/account', 'method' => 'GET', 'module' => 'Account'],
+            ['name' => 'show account', 'guard_name' => 'api', 'apiPath' => '/v1/account/{user}', 'method' => 'GET', 'module' => 'Account'],
+            ['name' => 'create account', 'guard_name' => 'api', 'apiPath' => '/v1/account', 'method' => 'POST', 'module' => 'Account'],
+            ['name' => 'update account', 'guard_name' => 'api', 'apiPath' => '/v1/account', 'method' => 'PUT', 'module' => 'Account'],
+            ['name' => 'delete account', 'guard_name' => 'api', 'apiPath' => '/v1/account/{user}', 'method' => 'DELETE', 'module' => 'Account'],
+            ['name' =>  'toggle account status',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/account/toggle-status/{user}',  'method'  =>  'PUT',  'module'  =>  'Account'],
+
+            ['name' => 'view dashboard stats', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/stats', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard counts', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/count', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard monthly revenue', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/monthly-revenue', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard top categories', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/top-category', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard top books', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/top-book', 'method' => 'GET', 'module' => 'Dashboard'],
         ];
 
         $added = false;

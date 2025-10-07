@@ -28,6 +28,7 @@ class User extends Authenticatable implements JwtSubject
         'password',
         'is_active',
         'customer_id',
+        'employee_id',
     ];
 
     protected $hidden = [
@@ -51,5 +52,10 @@ class User extends Authenticatable implements JwtSubject
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
     }
 }

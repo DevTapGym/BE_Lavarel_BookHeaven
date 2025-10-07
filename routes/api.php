@@ -19,6 +19,10 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderStatusController;
 use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\OrderStatusHistoryController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\DashboardController;
 
 // ---------------------
 // Public routes 
@@ -174,5 +178,39 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::post('/', [OrderStatusHistoryController::class, 'store'])->name('create.order.status.history');
         Route::put('/', [OrderStatusHistoryController::class, 'update'])->name('update.order.status.history');
         Route::delete('/{orderStatusHistory}', [OrderStatusHistoryController::class, 'destroy'])->name('delete.order.status.history');
+    });
+
+    Route::prefix('/role')->group(function () {
+        Route::get('/', [RoleController::class, 'getAllRoles'])->name('view.roles');
+        Route::get('/{role}', [RoleController::class, 'show'])->name('show.role');
+        Route::post('/', [RoleController::class, 'store'])->name('create.role');
+        Route::put('/', [RoleController::class, 'update'])->name('update.role');
+        Route::delete('/{role}', [RoleController::class, 'destroy'])->name('delete.role');
+    });
+
+    Route::prefix('/permission')->group(function () {
+        Route::get('/', [PermissionController::class, 'indexPaginated'])->name('view.permissions');
+        Route::get('/id/{id}', [PermissionController::class, 'showById'])->name('show.permission.by.id');
+        Route::get('/name', [PermissionController::class, 'showByName'])->name('show.permission.by.name');
+        Route::post('/', [PermissionController::class, 'store'])->name('create.permission');
+        Route::put('/', [PermissionController::class, 'update'])->name('update.permission');
+        Route::delete('/{permission}', [PermissionController::class, 'destroy'])->name('delete.permission');
+    });
+
+    Route::prefix('/account')->group(function () {
+        Route::get('/', [AccountController::class, 'indexPaginated'])->name('view.accounts');
+        Route::get('/{user}', [AccountController::class, 'show'])->name('show.account');
+        Route::post('/', [AccountController::class, 'store'])->name('create.account');
+        Route::put('/toggle-status/{user}', [AccountController::class, 'toggleActiveStatus'])->name('toggle.account.status');
+        Route::put('/', [AccountController::class, 'update'])->name('update.account');
+        Route::delete('/{user}', [AccountController::class, 'destroy'])->name('delete.account');
+    });
+
+    Route::prefix('/dashboard')->group(function () {
+        Route::get('/stats', [DashboardController::class, 'getStats'])->name('view.dashboard.stats');
+        Route::get('/count', [DashboardController::class, 'getBasicCounts'])->name('view.dashboard.counts');
+        Route::get('/monthly-revenue', [DashboardController::class, 'getMonthlyRevenue'])->name('view.dashboard.monthly.revenue');
+        Route::get('/top-category', [DashboardController::class, 'getTopCategoriesByYear'])->name('view.dashboard.top.categories');
+        Route::get('/top-book', [DashboardController::class, 'getTopBooksByYear'])->name('view.dashboard.top.books');
     });
 });
