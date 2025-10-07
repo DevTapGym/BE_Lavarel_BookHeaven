@@ -12,6 +12,8 @@ class Customer extends Model
         'email',
         'phone',
         'address',
+        'gender',
+        'date_of_birth',
     ];
 
     public function user()
@@ -19,8 +21,13 @@ class Customer extends Model
         return $this->hasOne(User::class);
     }
 
-    public function carts()
+    public function cart()
     {
         return $this->hasOne(Cart::class);
+    }
+
+    public function shippingAddresses()
+    {
+        return $this->hasMany(ShippingAddress::class);
     }
 }

@@ -5,7 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
+use App\Models\Customer;
+use App\Models\Cart;
 use App\Traits\ApiResponse;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -76,25 +79,47 @@ class AuthController extends Controller
 
     public function register(RegisterRequest $request)
     {
-        $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'is_active' => false,
-            'password' => bcrypt($request->password),
-        ]);
+        return DB::transaction(function () use ($request) {
+            // Tạo User
+            $user = User::create([
+                'name'      => $request->name,
+                'email'     => $request->email,
+                'is_active' => false,
+                'password'  => bcrypt($request->password),
+            ]);
 
-        $user->assignRole('admin');
+            // Gán role cho user
+            $user->assignRole('admin');
 
-        return $this->successResponse(
-            201,
-            'Register successful',
-            [
-                'id'    => $user->id,
-                'name'  => $user->name,
-                'email' => $user->email,
-                'is_active' => $user->is_active,
-            ],
-        );
+            // Tạo Customer tương ứng
+            $customer = Customer::create([
+                'name'    => $request->name,
+                'email'   => $request->email,
+                'phone'   => null, // Sẽ được cập nhật sau
+                'address' => null, // Sẽ được cập nhật sau
+            ]);
+
+            // Liên kết User với Customer (cần thêm customer_id vào bảng users)
+            $user->update(['customer_id' => $customer->id]);
+
+            // Tạo Cart cho Customer
+            Cart::create([
+                'customer_id' => $customer->id,
+                'quantity'    => 0,
+                'total_price' => 0,
+            ]);
+
+            return $this->successResponse(
+                201,
+                'Register successful',
+                [
+                    'id'     => $user->id,
+                    'name'        => $user->name,
+                    'email'       => $user->email,
+                    'is_active'   => $user->is_active,
+                ],
+            );
+        });
     }
 
     public function me()

@@ -21,7 +21,7 @@ class CartItemResource extends JsonResource
             'book_thumbnail' => $this->book->thumbnail,
             'unit_price' => $this->book->price,
             'quantity' => $this->quantity,
-            'total_price' => $this->price, // hoặc $this->quantity * $this->book->price
+            'total_price' => $this->price,
         ];
     }
 }

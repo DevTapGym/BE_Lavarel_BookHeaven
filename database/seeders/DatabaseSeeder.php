@@ -2,7 +2,8 @@
 
 namespace Database\Seeders;
 
-
+use App\Models\Order;
+use App\Models\PaymentMethod;
 use Illuminate\Database\Seeder;
 
 
@@ -13,9 +14,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             RoleSeeder::class,
-            UserSeeder::class,
-            //CategorySeeder::class,
-            //BookSeeder::class,
+            //UserSeeder::class,
+            // CategorySeeder::class,
+            // BookSeeder::class,
+            // SupplierSeeder::class,
+            // AddressTagSeeder::class,
+            // PaymentSeeder::class,
+            // OrderStatusSeeder::class,
         ]);
     }
 }

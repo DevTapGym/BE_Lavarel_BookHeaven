@@ -57,6 +57,81 @@ class PermissionSeeder extends Seeder
             ['name' => 'delete book feature', 'guard_name' => 'api', 'apiPath' => '/v1/book/feature/{feature_id}', 'method' => 'DELETE', 'module' => 'BookFeature'],
             ['name' => 'delete all book features', 'guard_name' => 'api', 'apiPath' => '/v1/book/feature/book/{book_id}', 'method' => 'DELETE', 'module' => 'BookFeature'],
 
+            ['name' => 'view suppliers', 'guard_name' => 'api', 'apiPath' => '/v1/supplier', 'method' => 'GET', 'module' => 'Supplier'],
+            ['name' => 'show supplier', 'guard_name' => 'api', 'apiPath' => '/v1/supplier/{id}', 'method' => 'GET', 'module' => 'Supplier'],
+            ['name' => 'show supplier books', 'guard_name' => 'api', 'apiPath' => '/v1/supplier/{id}/supplies', 'method' => 'GET', 'module' => 'Supplier'],
+            ['name' => 'show supplier supplies', 'guard_name' => 'api', 'apiPath' => '/v1/supplier/{id}/supplies', 'method' => 'GET', 'module' => 'Supplier'],
+            ['name' => 'create supplier', 'guard_name' => 'api', 'apiPath' => '/v1/supplier', 'method' => 'POST', 'module' => 'Supplier'],
+            ['name' => 'update supplier', 'guard_name' => 'api', 'apiPath' => '/v1/supplier', 'method' => 'PUT', 'module' => 'Supplier'],
+            ['name' => 'delete supplier', 'guard_name' => 'api', 'apiPath' => '/v1/supplier/{supplier}', 'method' => 'DELETE', 'module' => 'Supplier'],
+
+            ['name' => 'view supplies', 'guard_name' => 'api', 'apiPath' => '/v1/supply', 'method' => 'GET', 'module' => 'Supply'],
+            ['name' =>  'show supply',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/supply/{supply}',  'method'  =>  'GET',  'module'  =>  'Supply'],
+            ['name' =>  'create supply',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/supply',  'method'  =>  'POST',  'module'  =>  'Supply'],
+            ['name' =>  'update supply',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/supply',  'method'  =>  'PUT',  'module'  =>  'Supply'],
+            ['name' =>  'delete supply',  'guard_name'  =>  'api',  'apiPath' =>  '/v1/supply/{supply}',  'method'  =>  'DELETE',  'module'  =>  'Supply'],
+
+            ['name' => 'view import receipts', 'guard_name' => 'api', 'apiPath' => '/v1/import-receipt', 'method' => 'GET', 'module' => 'ImportReceipt'],
+            ['name' => 'show import receipt', 'guard_name' => 'api', 'apiPath' => '/v1/import-receipt/{import_receipt}', 'method' => 'GET', 'module' => 'ImportReceipt'],
+            ['name' => 'create import receipt', 'guard_name' => 'api', 'apiPath' => '/v1/import-receipt', 'method' => 'POST', 'module' => 'ImportReceipt'],
+            ['name' => 'update import receipt', 'guard_name' => 'api', 'apiPath' => '/v1/import-receipt', 'method' => 'PUT', 'module' => 'ImportReceipt'],
+
+            ['name' => 'view address tags', 'guard_name' => 'api', 'apiPath' => '/v1/address-tag', 'method' => 'GET', 'module' => 'AddressTag'],
+            ['name' => 'create address tag', 'guard_name' => 'api', 'apiPath' => '/v1/address-tag', 'method' => 'POST', 'module' => 'AddressTag'],
+            ['name' => 'update address tag', 'guard_name' => 'api', 'apiPath' => '/v1/address-tag', 'method' => 'PUT', 'module' => 'AddressTag'],
+            ['name' => 'delete address tag', 'guard_name' => 'api', 'apiPath' => '/v1/address-tag/{addressTag}', 'method' => 'DELETE', 'module' => 'AddressTag'],
+
+            ['name' => 'view payment methods', 'guard_name' => 'api', 'apiPath' => '/v1/payment-method', 'method' => 'GET', 'module' => 'PaymentMethod'],
+            ['name' => 'create payment method', 'guard_name' => 'api', 'apiPath' => '/v1/payment-method', 'method' => 'POST', 'module' => 'PaymentMethod'],
+            ['name' => 'update payment method', 'guard_name' => 'api', 'apiPath' => '/v1/payment-method', 'method' => 'PUT', 'module' => 'PaymentMethod'],
+            ['name' => 'delete payment method', 'guard_name' => 'api', 'apiPath' => '/v1/payment-method/{paymentMethod}', 'method' => 'DELETE', 'module' => 'PaymentMethod'],
+
+            ['name' => 'view customer addresses', 'guard_name' => 'api', 'apiPath' => '/v1/address/customer/{customer_id}', 'method' => 'GET', 'module' => 'ShippingAddress'],
+            ['name' => 'create shipping address', 'guard_name' => 'api', 'apiPath' => '/v1/address', 'method' => 'POST', 'module' => 'ShippingAddress'],
+            ['name' => 'update shipping address', 'guard_name' => 'api', 'apiPath' => '/v1/address/{id}', 'method' => 'PUT', 'module' => 'ShippingAddress'],
+            ['name' => 'delete shipping address', 'guard_name' => 'api', 'apiPath' => '/v1/address/{id}', 'method' => 'DELETE', 'module' => 'ShippingAddress'],
+
+            ['name' => 'view order statuses', 'guard_name' => 'api', 'apiPath' => '/v1/order-status', 'method' => 'GET', 'module' => 'OrderStatus'],
+            ['name' => 'create order status', 'guard_name' => 'api', 'apiPath' => '/v1/order-status', 'method' => 'POST', 'module' => 'OrderStatus'],
+            ['name' => 'update order status', 'guard_name' => 'api', 'apiPath' => '/v1/order-status', 'method' => 'PUT', 'module' => 'OrderStatus'],
+            ['name' => 'delete order status', 'guard_name' => 'api', 'apiPath' => '/v1/order-status/{orderStatus}', 'method' => 'DELETE', 'module' => 'OrderStatus'],
+
+            ['name' => 'view order status histories', 'guard_name' => 'api',  'apiPath'  =>  '/v1/order-status-history/order/{orderId}',  'method'  =>  'GET',  'module'  =>  'OrderStatusHistory'],
+            ['name' =>  'create order status history',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/order-status-history',  'method'  =>  'POST',  'module'  =>  'OrderStatusHistory'],
+            ['name' =>  'update order status history',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/order-status-history',  'method'  =>  'PUT',  'module'  =>  'OrderStatusHistory'],
+            ['name' =>  'delete order status history',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/order-status-history/{orderStatusHistory}',  'method'  =>  'DELETE',  'module'  =>  'OrderStatusHistory'],
+
+            ['name' => 'view orders', 'guard_name' => 'api', 'apiPath' => '/v1/order', 'method' => 'GET', 'module' => 'Order'],
+            ['name' => 'view user orders', 'guard_name' => 'api', 'apiPath' => '/v1/order/customer/{customerId}', 'method' => 'GET', 'module' => 'Order'],
+            ['name' => 'show order', 'guard_name' => 'api', 'apiPath' => '/v1/order/{order}', 'method' => 'GET', 'module' => 'Order'],
+            ['name' => 'create order', 'guard_name' => 'api', 'apiPath' => '/v1/order/create', 'method' => 'POST', 'module' => 'Order'],
+            ['name' => 'place order', 'guard_name' => 'api', 'apiPath' => '/v1/order/place', 'method' => 'POST', 'module' => 'Order'],
+
+            ['name' => 'view roles', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'GET', 'module' => 'Role'],
+            ['name' => 'show role', 'guard_name' => 'api', 'apiPath' => '/v1/role/{role}', 'method' => 'GET', 'module' => 'Role'],
+            ['name' => 'create role', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'POST', 'module' => 'Role'],
+            ['name' => 'update role', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'PUT', 'module' => 'Role'],
+            ['name' => 'delete role', 'guard_name' => 'api', 'apiPath' => '/v1/role/{role}', 'method' => 'DELETE', 'module' => 'Role'],
+
+            ['name' =>  'view permissions',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'show permission by id',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission/id',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'show permission by name',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission/name',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'create permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission',  'method'  =>  'POST',  'module'  =>  'Permission'],
+            ['name' =>  'update permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission',  'method'  =>  'PUT',  'module'  =>  'Permission'],
+            ['name' =>  'delete permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission/{permission}',  'method'  =>  'DELETE',  'module'  =>  'Permission'],
+
+            ['name' => 'view accounts', 'guard_name' => 'api', 'apiPath' => '/v1/account', 'method' => 'GET', 'module' => 'Account'],
+            ['name' => 'show account', 'guard_name' => 'api', 'apiPath' => '/v1/account/{user}', 'method' => 'GET', 'module' => 'Account'],
+            ['name' => 'create account', 'guard_name' => 'api', 'apiPath' => '/v1/account', 'method' => 'POST', 'module' => 'Account'],
+            ['name' => 'update account', 'guard_name' => 'api', 'apiPath' => '/v1/account', 'method' => 'PUT', 'module' => 'Account'],
+            ['name' => 'delete account', 'guard_name' => 'api', 'apiPath' => '/v1/account/{user}', 'method' => 'DELETE', 'module' => 'Account'],
+            ['name' =>  'toggle account status',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/account/toggle-status/{user}',  'method'  =>  'PUT',  'module'  =>  'Account'],
+
+            ['name' => 'view dashboard stats', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/stats', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard counts', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/count', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard monthly revenue', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/monthly-revenue', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard top categories', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/top-category', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard top books', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/top-book', 'method' => 'GET', 'module' => 'Dashboard'],
         ];
 
         $added = false;

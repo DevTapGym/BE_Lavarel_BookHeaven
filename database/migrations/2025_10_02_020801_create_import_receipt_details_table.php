@@ -11,17 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cart_items', function (Blueprint $table) {
+        Schema::create('import_receipt_details', function (Blueprint $table) {
             $table->id();
             $table->timestamps();
-
             $table->integer('quantity')->default(1);
-            $table->decimal('price', 10, 2)->default(0);
-            $table->boolean('is_selected')->default(true);
+            $table->decimal('price', 15, 2)->default(0);
 
-            $table->foreignId('cart_id')->constrained('carts');
-            $table->foreignId('book_id')->constrained('books');
-            $table->unique(['cart_id', 'book_id']);
+            $table->foreignId('import_receipt_id')
+                ->constrained('import_receipts')
+                ->onDelete('cascade');
+
+            $table->foreignId('supply_id')
+                ->constrained('supplies');
         });
     }
 
@@ -30,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cart_items');
+        Schema::dropIfExists('import_receipt_details');
     }
 };
