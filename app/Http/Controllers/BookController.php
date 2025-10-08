@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\ImportReceipt;
+use App\Models\ImportReceiptDetail;
+use App\Models\Supply;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Category;
@@ -34,9 +37,42 @@ class BookController extends Controller
         );
     }
 
+    public function search($search)
+    {
+        $books = Book::where('title', 'like', "%$search%")
+            ->orWhere('author', 'like', "%$search%")
+            ->orWhere('description', 'like', "%$search%")
+            ->where('is_active', true)
+            ->get();
+
+        return $this->successResponse(
+            200,
+            'Search results retrieved successfully',
+            $books
+        );
+    }
+
+    public function getBookBaner() {}
+
+    public function getBookSaleOff()
+    {
+        $books = Book::where('is_active', true)
+            ->where('sale_off', '>', 0)
+            ->orderBy('sale_off', 'desc')
+            ->take(5)
+            ->get();
+
+        return $this->successResponse(
+            200,
+            'Books on sale retrieved successfully',
+            $books
+        );
+    }
+
     public function getPopularBooks()
     {
         $books = Book::where('is_active', true)
+            ->where('sale_off', '=', 0)
             ->orderBy('sold', 'desc')
             ->take(5)
             ->get();
@@ -46,6 +82,60 @@ class BookController extends Controller
             'Popular books retrieved successfully',
             $books
         );
+    }
+
+    public function getTop3BestSellingBooksByYear(Request $request)
+    {
+        try {
+            $year = (int) $request->input('year', now()->year);
+
+            // Validate year range
+            if ($year < 2020 || $year > now()->year + 1) {
+                return $this->errorResponse(
+                    400,
+                    'Bad Request',
+                    'Year must be between 2020 and ' . (now()->year + 1)
+                );
+            }
+
+            // Get top 3 best selling books by year based on order items
+            $topBooks = Book::select([
+                'books.id',
+                'books.title',
+                'books.author',
+                'books.price',
+                'books.thumbnail',
+                'books.sale_off',
+                DB::raw('CAST(SUM(order_items.quantity) AS UNSIGNED) as sold')
+            ])
+                ->join('order_items', 'books.id', '=', 'order_items.book_id')
+                ->join('orders', 'order_items.order_id', '=', 'orders.id')
+                ->whereYear('orders.created_at', $year)
+                ->where('books.is_active', true)
+                ->groupBy([
+                    'books.id',
+                    'books.title',
+                    'books.author',
+                    'books.price',
+                    'books.thumbnail',
+                    'books.sale_off'
+                ])
+                ->orderBy('sold', 'desc')
+                ->limit(3)
+                ->get();
+
+            return $this->successResponse(
+                200,
+                "Top 3 best selling books in {$year} retrieved successfully",
+                $topBooks
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error retrieving top selling books',
+                $th->getMessage()
+            );
+        }
     }
 
     public function store(Request $request)
@@ -206,5 +296,70 @@ class BookController extends Controller
             'Books retrieved successfully',
             $category->books
         );
+    }
+
+    public function getBookBanner()
+    {
+        try {
+            $bannerBooks = [];
+
+            $newestBook = Book::where('is_active', true)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            if ($newestBook) {
+                $bannerBooks[] = $newestBook;
+            }
+
+            $bestSellerBook = Book::where('is_active', true)
+                ->where('sold', '>', 0)
+                ->orderBy('sold', 'desc')
+                ->first();
+
+            if ($bestSellerBook) {
+                $bannerBooks[] = $bestSellerBook;
+            }
+
+            // Lấy sách từ phiếu nhập mới nhất
+            $latestImportReceipt = ImportReceipt::orderBy('created_at', 'desc')->first();
+
+            $newStockBook = null;
+            if ($latestImportReceipt) {
+                // Lấy 1 sách ngẫu nhiên từ chi tiết phiếu nhập mới nhất
+                $newStockBook = Book::whereHas('supplies', function ($query) use ($latestImportReceipt) {
+                    $query->whereHas('importReceiptDetails', function ($subQuery) use ($latestImportReceipt) {
+                        $subQuery->where('import_receipt_id', $latestImportReceipt->id);
+                    });
+                })
+                    ->where('is_active', true)
+                    ->inRandomOrder()
+                    ->first();
+            }
+
+            if ($newStockBook) {
+                $bannerBooks[] = $newStockBook;
+            }
+
+            $highestDiscountBook = Book::where('is_active', true)
+                ->where('sale_off', '>', 0)
+                ->orderBy('sale_off', 'desc')
+                ->first();
+
+            if ($highestDiscountBook) {
+                $bannerBooks[] =  $highestDiscountBook;
+            }
+
+            return $this->successResponse(
+                200,
+                'Banner books retrieved successfully',
+                $bannerBooks
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error retrieving banner books',
+                $th->getMessage()
+            );
+        }
     }
 }

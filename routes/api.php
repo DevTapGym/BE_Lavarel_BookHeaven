@@ -23,6 +23,7 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UploadController;
 
 // ---------------------
 // Public routes 
@@ -41,7 +42,11 @@ Route::prefix('/v1')->group(function () {
 
     Route::prefix('/book')->group(function () {
         Route::get('/', [BookController::class, 'indexPaginated']);
+        Route::get('/search/{search}', [BookController::class, 'search']);
         Route::get('/popular', [BookController::class, 'getPopularBooks']);
+        Route::get('/sale-off', [BookController::class, 'getBookSaleOff']);
+        Route::get('/banner', [BookController::class, 'getBookBanner']);
+        Route::get('/top-selling', [BookController::class, 'getTop3BestSellingBooksByYear']);
         Route::get('/{book}', [BookController::class, 'show']);
         Route::get('/category/{category_id}', [BookController::class, 'getBooksByCategory']);
         Route::get('/feature/{book_id}', [BookFeatureController::class, 'index'])->name('view.book.features');
@@ -58,10 +63,15 @@ Route::prefix('/v1')->group(function () {
 // ---------------------
 Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->group(function () {
 
-    // Auth protected
     Route::prefix('/auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/me', [AuthController::class, 'me'])->name('get.info');
+    });
+
+    Route::prefix('/upload')->group(function () {
+        Route::post('/avatar', [UploadController::class, 'uploadAvatar'])->name('upload.avatar');
+        Route::post('/book-image', [UploadController::class, 'uploadImageBook'])->name('upload.book.image');
+        Route::post('/thumbnail', [UploadController::class, 'uploadThumbnailBook'])->name('upload.thumbnail.book');
     });
 
     Route::prefix('/customer')->group(function () {
