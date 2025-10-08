@@ -22,4 +22,9 @@ class Supply extends Model
     {
         return $this->belongsTo(Supplier::class);
     }
+
+    public function importReceiptDetails()
+    {
+        return $this->hasMany(ImportReceiptDetail::class);
+    }
 }

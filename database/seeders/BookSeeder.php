@@ -99,7 +99,7 @@ class BookSeeder extends Seeder
                 'is_active' => true,
                 'quantity' => 40,
                 'sold' => 20,
-                'sale_off' => 0,
+                'sale_off' => 20,
             ],
             [
                 'title' => 'Khi Hơi Thở Hóa Thinh Không',

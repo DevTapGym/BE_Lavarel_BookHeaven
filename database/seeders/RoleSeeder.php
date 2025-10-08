@@ -13,7 +13,29 @@ class RoleSeeder extends Seeder
     {
         $admin = Role::updateOrCreate(['name' => 'admin', 'guard_name' => 'api']);
         $admin->syncPermissions(Permission::all());
+        $this->command->info('Roles have been seeded successfully!');
 
+        $customer = Role::updateOrCreate(['name' => 'customer', 'guard_name' => 'api']);
+        $customer->syncPermissions(Permission::whereIn('name', [
+            'view categories',
+            'view category',
+            'view products',
+            'view product'
+        ])->get());
+        $this->command->info('Roles have been seeded successfully!');
+
+        $employee = Role::updateOrCreate(['name' => 'employee', 'guard_name' => 'api']);
+        $employee->syncPermissions(Permission::whereIn('name', [
+            'view categories',
+            'view category',
+            'view products',
+            'view product',
+            'create product',
+            'update product',
+            'delete product',
+            'view orders',
+            'view order',
+        ])->get());
         $this->command->info('Roles have been seeded successfully!');
     }
 }

@@ -16,6 +16,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'logout', 'guard_name' => 'api', 'apiPath' => '/v1/auth/logout', 'method' => 'POST', 'module' => 'Auth'],
             ['name' => 'get info', 'guard_name' => 'api', 'apiPath' => '/v1/auth/me', 'method' => 'GET', 'module' => 'Auth'],
 
+            ['name' => 'upload avatar', 'guard_name' => 'api', 'apiPath' => '/v1/upload/avatar', 'method' => 'POST', 'module' => 'Upload'],
+            ['name' => 'upload book image', 'guard_name' => 'api', 'apiPath' => '/v1/upload/book-image', 'method' => 'POST', 'module' => 'Upload'],
+            ['name' => 'upload thumbnail book', 'guard_name' => 'api', 'apiPath' => '/v1/upload/thumbnail', 'method' => 'POST', 'module' => 'Upload'],
+
             ['name' => 'view customers', 'guard_name' => 'api', 'apiPath' => '/v1/customer', 'method' => 'GET', 'module' => 'Customer'],
             ['name' => 'show customer', 'guard_name' => 'api', 'apiPath' => '/v1/customer/{customer}', 'method' => 'GET', 'module' => 'Customer'],
             ['name' => 'create customer', 'guard_name' => 'api', 'apiPath' => '/v1/customer', 'method' => 'POST', 'module' => 'Customer'],
