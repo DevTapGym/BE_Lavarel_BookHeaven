@@ -199,6 +199,12 @@ class AuthController extends Controller
 
             $accessToken = JWTAuth::claims($customClaims)->fromUser($user);
 
+            // Cập nhật current_jti với JTI của access token mới
+            $accessPayload = JWTAuth::setToken($accessToken)->getPayload();
+            $accessJti = $accessPayload->get('jti');
+            $user->current_jti = $accessJti;
+            $user->save();
+
             $newRefreshTokenPayload = [
                 'sub' => $user->id,
                 'jti' => Str::uuid()->toString(),
@@ -216,7 +222,7 @@ class AuthController extends Controller
             return $this->successResponse(
                 200,
                 'Token refreshed',
-                $this->formatAuthData($accessToken, $user, $newRefreshToken)
+                $this->formatAuthData($accessToken, $user)
             )->cookie(
                 'refresh_token',
                 $newRefreshToken,

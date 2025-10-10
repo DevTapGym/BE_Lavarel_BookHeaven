@@ -190,7 +190,6 @@ class CartController extends Controller
         try {
             $validated = $request->validate([
                 'quantity' => 'sometimes|integer|min:1',
-                'is_selected' => 'sometimes|boolean',
             ]);
 
             $cartItem = CartItem::findOrFail($cart_item_id);

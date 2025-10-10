@@ -21,7 +21,7 @@ class CartItemResource extends JsonResource
             'book_author' => $this->book->author,
             'book_thumbnail' => $this->book->thumbnail,
             'unit_price' => $this->book->price,
-            'sale' => $this->book->sale,
+            'sale' => $this->book->sale_off,
             'quantity' => $this->quantity,
             'total_price' => $this->price,
             'in_stock' => $this->book->quantity,
