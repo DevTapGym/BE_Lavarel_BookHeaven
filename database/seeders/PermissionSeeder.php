@@ -32,8 +32,8 @@ class PermissionSeeder extends Seeder
             ['name' =>  'update employee',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/employee',  'method'  =>  'PUT',  'module'  =>  'Employee'],
             ['name' =>  'delete employee',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/employee/{employee}',  'method'  =>  'DELETE',  'module'  =>  'Employee'],
 
-
             ['name' => 'view cart items', 'guard_name' => 'api', 'apiPath' => '/v1/cart/{customer_id}', 'method' => 'GET', 'module' => 'Cart'],
+            ['name' => 'view my cart', 'guard_name' => 'api', 'apiPath' => '/v1/cart/my-cart', 'method' => 'GET', 'module' => 'Cart'],
             ['name' => 'create cart', 'guard_name' => 'api', 'apiPath' => '/v1/cart', 'method' => 'POST', 'module' => 'Cart'],
             ['name' => 'add cart item', 'guard_name' => 'api', 'apiPath' => '/v1/cart/add-item', 'method' => 'POST', 'module' => 'Cart'],
             ['name' => 'update cart item', 'guard_name' => 'api', 'apiPath' => '/v1/cart/update-item/{cart_item_id}', 'method' => 'PUT', 'module' => 'Cart'],

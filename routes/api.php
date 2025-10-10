@@ -91,6 +91,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
     });
 
     Route::prefix('/cart')->group(function () {
+        Route::get('/my-cart', [CartController::class, 'getMyCart'])->name('view.my.cart');
         Route::get('/{customer_id}', [CartController::class, 'getCartItemsByCustomer'])->name('view.cart.items');
         Route::post('/', [CartController::class, 'store'])->name('create.cart');
         Route::post('/add', [CartController::class, 'addItemCart'])->name('add.cart.item');

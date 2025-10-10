@@ -30,6 +30,8 @@ class BookController extends Controller
 
     public function show(Book $book)
     {
+        $book->load('categories', 'bookImages', 'bookfeatures');
+
         return $this->successResponse(
             200,
             'Book retrieved successfully',
