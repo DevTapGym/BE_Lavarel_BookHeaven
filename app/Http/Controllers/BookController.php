@@ -54,7 +54,19 @@ class BookController extends Controller
         );
     }
 
-    public function getBookBaner() {}
+    public function getRandomBooks()
+    {
+        $books = Book::where('is_active', true)
+            ->inRandomOrder()
+            ->take(3)
+            ->get();
+
+        return $this->successResponse(
+            200,
+            'Random books retrieved successfully',
+            $books
+        );
+    }
 
     public function getBookSaleOff()
     {

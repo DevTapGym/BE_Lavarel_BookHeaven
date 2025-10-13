@@ -44,6 +44,7 @@ Route::prefix('/v1')->group(function () {
         Route::get('/', [BookController::class, 'indexPaginated']);
         Route::get('/search/{search}', [BookController::class, 'search']);
         Route::get('/popular', [BookController::class, 'getPopularBooks']);
+        Route::get('/random', [BookController::class, 'getRandomBooks']);
         Route::get('/sale-off', [BookController::class, 'getBookSaleOff']);
         Route::get('/banner', [BookController::class, 'getBookBanner']);
         Route::get('/top-selling', [BookController::class, 'getTop3BestSellingBooksByYear']);
@@ -66,12 +67,15 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
     Route::prefix('/auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/me', [AuthController::class, 'me'])->name('get.info');
+        Route::put('/edit-profile', [AuthController::class, 'updateProfile'])->name('edit.profile');
+        Route::put('/change-password', [AuthController::class, 'changePassword'])->name('change.password');
     });
 
     Route::prefix('/upload')->group(function () {
         Route::post('/avatar', [UploadController::class, 'uploadAvatar'])->name('upload.avatar');
         Route::post('/book-image', [UploadController::class, 'uploadImageBook'])->name('upload.book.image');
         Route::post('/thumbnail', [UploadController::class, 'uploadThumbnailBook'])->name('upload.thumbnail.book');
+        Route::post('/logo-payment', [UploadController::class, 'uploadLogoPaymentMethod'])->name('upload.logo.payment.method');
     });
 
     Route::prefix('/customer')->group(function () {
@@ -157,7 +161,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
     });
 
     Route::prefix('/address')->group(function () {
-        Route::get('/customer/{customer_id}', [ShippingAddressController::class, 'getAddressesByCustomer'])->name('view.customer.addresses');
+        Route::get('/customer', [ShippingAddressController::class, 'getAddressesByCustomer'])->name('view.customer.addresses');
         Route::post('/', [ShippingAddressController::class, 'store'])->name('create.shipping.address');
         Route::put('/', [ShippingAddressController::class, 'update'])->name('update.shipping.address');
         Route::delete('/{id}', [ShippingAddressController::class, 'destroy'])->name('delete.shipping.address');
