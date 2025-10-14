@@ -82,10 +82,10 @@ class AuthController extends Controller
         return DB::transaction(function () use ($request) {
             // Tạo User
             $user = User::create([
-                'name'      => $request->name,
+                'username'      => $request->name,
+                'password'  => bcrypt($request->password),
                 'email'     => $request->email,
                 'is_active' => false,
-                'password'  => bcrypt($request->password),
             ]);
 
             // Gán role cho user
@@ -117,6 +117,7 @@ class AuthController extends Controller
                     'name'        => $user->name,
                     'email'       => $user->email,
                     'is_active'   => $user->is_active,
+                    'createdAt' => $user->created_at,
                 ],
             );
         });
@@ -134,14 +135,16 @@ class AuthController extends Controller
             'Get user info successful',
             [
                 'account' => [
-                    'name'      => $user->name,
+                    'id'        => $user->id,
                     'email'     => $user->email,
-                    'is_active' => $user->is_active,
+                    'name'      => $user->name,
                     'avatar'    => $user->avatar,
-                    'date_of_birth' => $user->customer->date_of_birth ?? null,
                     'phone'     => $user->customer->phone ?? null,
+                    'role'      => $user->roles()->pluck('name')->first() ?? 'user',
+                    'customer'  => $user->customer,
+                    'is_active' => $user->is_active,
+                    'date_of_birth' => $user->customer->date_of_birth ?? null,
                     'gender'    => $user->customer->gender ?? null,
-                    'role'      => $role,
                 ]
             ]
         );
