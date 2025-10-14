@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Book;
 use App\Models\CartItem;
-use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use App\Models\OrderStatus;
 use App\Models\OrderStatusHistory;
 use App\Http\Requests\OrderRequest;
@@ -64,12 +64,11 @@ class OrderController extends Controller
         );
     }
 
-    public function getOrdersByUser($userId, Request $request)
+    public function getOrdersByUser(Request $request)
     {
         $pageSize = $request->query('size', 10);
 
-        // Tìm user và customer_id của user đó
-        $user = User::find($userId);
+        $user = Auth::user();
 
         if (!$user || !$user->customer_id) {
             return $this->errorResponse(
@@ -92,6 +91,14 @@ class OrderController extends Controller
             ])
             ->orderBy('created_at', 'desc')
             ->paginate($pageSize);
+
+        // Transform collection using OrderResource
+        $transformedOrders = $orders->getCollection()->map(function ($order) {
+            return new OrderResource($order);
+        });
+
+        // Replace the collection in paginator
+        $orders->setCollection($transformedOrders);
 
         $data = $this->paginateResponse($orders);
 

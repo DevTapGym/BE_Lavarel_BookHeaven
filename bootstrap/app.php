@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Illuminate\Auth\AuthenticationException;
 use App\Traits\ApiResponse;
+use App\Http\Middleware\CorsMiddleware;
 
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -22,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(ForceJsonResponse::class);
-
+        $middleware->use([CorsMiddleware::class]);
         $middleware->alias([
             'jwt.auth' => EnsureTokenIsValid::class,
             'check.permission' => CheckPermissionByRoute::class,

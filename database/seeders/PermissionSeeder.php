@@ -109,7 +109,7 @@ class PermissionSeeder extends Seeder
             ['name' =>  'delete order status history',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/order-status-history/{orderStatusHistory}',  'method'  =>  'DELETE',  'module'  =>  'OrderStatusHistory'],
 
             ['name' => 'view orders', 'guard_name' => 'api', 'apiPath' => '/v1/order', 'method' => 'GET', 'module' => 'Order'],
-            ['name' => 'view user orders', 'guard_name' => 'api', 'apiPath' => '/v1/order/customer/{customerId}', 'method' => 'GET', 'module' => 'Order'],
+            ['name' => 'view user orders', 'guard_name' => 'api', 'apiPath' => '/v1/order/user', 'method' => 'GET', 'module' => 'Order'],
             ['name' => 'show order', 'guard_name' => 'api', 'apiPath' => '/v1/order/{order}', 'method' => 'GET', 'module' => 'Order'],
             ['name' => 'create order', 'guard_name' => 'api', 'apiPath' => '/v1/order/create', 'method' => 'POST', 'module' => 'Order'],
             ['name' => 'place order', 'guard_name' => 'api', 'apiPath' => '/v1/order/place', 'method' => 'POST', 'module' => 'Order'],

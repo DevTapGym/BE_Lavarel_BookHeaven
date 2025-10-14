@@ -176,10 +176,10 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
 
     Route::prefix('/order')->group(function () {
         Route::get('/', [OrderController::class, 'indexPaginated'])->name('view.orders');
-        Route::get('/{order}', [OrderController::class, 'show'])->name('show.order');
-        Route::get('/user/{userId}', [OrderController::class, 'getOrdersByUser'])->name('view.user.orders');
+        Route::get('/user', [OrderController::class, 'getOrdersByUser'])->name('view.user.orders');
         Route::post('/create', [OrderController::class, 'createOrder'])->name('create.order');
         Route::post('/place', [OrderController::class, 'placeOrder'])->name('place.order');
+        Route::get('/{order}', [OrderController::class, 'show'])->name('show.order');
     });
 
     Route::prefix('/order-status')->group(function () {

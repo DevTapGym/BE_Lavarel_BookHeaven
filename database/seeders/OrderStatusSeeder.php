@@ -17,6 +17,7 @@ class OrderStatusSeeder extends Seeder
             ['name' => 'Shipped', 'description' => 'Order has been shipped', 'sequence' => 3],
             ['name' => 'Delivered', 'description' => 'Order has been delivered to the customer', 'sequence' => 4],
             ['name' => 'Cancelled', 'description' => 'Order has been cancelled', 'sequence' => 5],
+            ['name' => 'Returned', 'description' => 'Order has been returned by the customer', 'sequence' => 6],
         ];
 
         foreach ($statuses as $status) {
