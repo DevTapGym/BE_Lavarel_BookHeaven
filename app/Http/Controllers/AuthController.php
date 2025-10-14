@@ -127,18 +127,22 @@ class AuthController extends Controller
         $user = Auth::user();
 
         $user->load('customer');
+        $role = $user->roles()->pluck('name')->first() ?? 'user';
 
         return $this->successResponse(
             200,
             'Get user info successful',
             [
-                'name'      => $user->name,
-                'email'     => $user->email,
-                'is_active' => $user->is_active,
-                'avatar'    => $user->avatar,
-                'date_of_birth' => $user->customer->date_of_birth ?? null,
-                'phone'     => $user->customer->phone ?? null,
-                'gender'    => $user->customer->gender ?? null,
+                'account' => [
+                    'name'      => $user->name,
+                    'email'     => $user->email,
+                    'is_active' => $user->is_active,
+                    'avatar'    => $user->avatar,
+                    'date_of_birth' => $user->customer->date_of_birth ?? null,
+                    'phone'     => $user->customer->phone ?? null,
+                    'gender'    => $user->customer->gender ?? null,
+                    'role'      => $role,
+                ]
             ]
         );
     }

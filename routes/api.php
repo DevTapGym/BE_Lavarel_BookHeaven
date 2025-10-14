@@ -24,6 +24,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UploadController;
+use App\Http\Controllers\PromotionController;
 
 // ---------------------
 // Public routes 
@@ -57,6 +58,11 @@ Route::prefix('/v1')->group(function () {
     Route::prefix('/category')->group(function () {
         Route::get('/', [CategoryController::class, 'indexPaginated']);
     });
+
+    Route::prefix('/promotions')->group(function () {
+        Route::get('/', [PromotionController::class, 'indexPaginated']);
+        Route::get('/{promotion}', [PromotionController::class, 'show']);
+    });
 });
 
 // ---------------------
@@ -66,7 +72,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
 
     Route::prefix('/auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-        Route::get('/me', [AuthController::class, 'me'])->name('get.info');
+        Route::get('/account', [AuthController::class, 'me'])->name('get.info');
         Route::put('/edit-profile', [AuthController::class, 'updateProfile'])->name('edit.profile');
         Route::put('/change-password', [AuthController::class, 'changePassword'])->name('change.password');
     });
@@ -211,6 +217,12 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::post('/', [PermissionController::class, 'store'])->name('create.permission');
         Route::put('/', [PermissionController::class, 'update'])->name('update.permission');
         Route::delete('/{permission}', [PermissionController::class, 'destroy'])->name('delete.permission');
+    });
+
+    Route::prefix('/promotions')->group(function () {
+        Route::post('/', [PromotionController::class, 'store'])->name('create.promotion');
+        Route::put('/{promotion}', [PromotionController::class, 'update'])->name('update.promotion');
+        Route::delete('/{promotion}', [PromotionController::class, 'destroy'])->name('delete.promotion');
     });
 
     Route::prefix('/account')->group(function () {
