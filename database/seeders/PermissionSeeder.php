@@ -15,10 +15,13 @@ class PermissionSeeder extends Seeder
         $permissions = [
             ['name' => 'logout', 'guard_name' => 'api', 'apiPath' => '/v1/auth/logout', 'method' => 'POST', 'module' => 'Auth'],
             ['name' => 'get info', 'guard_name' => 'api', 'apiPath' => '/v1/auth/me', 'method' => 'GET', 'module' => 'Auth'],
+            ['name' => 'edit profile', 'guard_name' => 'api', 'apiPath' => '/v1/auth/edit-profile', 'method' => 'PUT', 'module' => 'Auth'],
+            ['name' => 'change password', 'guard_name' => 'api', 'apiPath' => '/v1/auth/change-password', 'method' => 'PUT', 'module' => 'Auth'],
 
             ['name' => 'upload avatar', 'guard_name' => 'api', 'apiPath' => '/v1/upload/avatar', 'method' => 'POST', 'module' => 'Upload'],
             ['name' => 'upload book image', 'guard_name' => 'api', 'apiPath' => '/v1/upload/book-image', 'method' => 'POST', 'module' => 'Upload'],
             ['name' => 'upload thumbnail book', 'guard_name' => 'api', 'apiPath' => '/v1/upload/thumbnail', 'method' => 'POST', 'module' => 'Upload'],
+            ['name' => 'upload logo payment method', 'guard_name' => 'api', 'apiPath' => '/v1/upload/logo-payment', 'method' => 'POST', 'module' => 'Upload'],
 
             ['name' => 'view customers', 'guard_name' => 'api', 'apiPath' => '/v1/customer', 'method' => 'GET', 'module' => 'Customer'],
             ['name' => 'show customer', 'guard_name' => 'api', 'apiPath' => '/v1/customer/{customer}', 'method' => 'GET', 'module' => 'Customer'],
@@ -32,8 +35,8 @@ class PermissionSeeder extends Seeder
             ['name' =>  'update employee',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/employee',  'method'  =>  'PUT',  'module'  =>  'Employee'],
             ['name' =>  'delete employee',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/employee/{employee}',  'method'  =>  'DELETE',  'module'  =>  'Employee'],
 
-
             ['name' => 'view cart items', 'guard_name' => 'api', 'apiPath' => '/v1/cart/{customer_id}', 'method' => 'GET', 'module' => 'Cart'],
+            ['name' => 'view my cart', 'guard_name' => 'api', 'apiPath' => '/v1/cart/my-cart', 'method' => 'GET', 'module' => 'Cart'],
             ['name' => 'create cart', 'guard_name' => 'api', 'apiPath' => '/v1/cart', 'method' => 'POST', 'module' => 'Cart'],
             ['name' => 'add cart item', 'guard_name' => 'api', 'apiPath' => '/v1/cart/add-item', 'method' => 'POST', 'module' => 'Cart'],
             ['name' => 'update cart item', 'guard_name' => 'api', 'apiPath' => '/v1/cart/update-item/{cart_item_id}', 'method' => 'PUT', 'module' => 'Cart'],
@@ -90,7 +93,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'update payment method', 'guard_name' => 'api', 'apiPath' => '/v1/payment-method', 'method' => 'PUT', 'module' => 'PaymentMethod'],
             ['name' => 'delete payment method', 'guard_name' => 'api', 'apiPath' => '/v1/payment-method/{paymentMethod}', 'method' => 'DELETE', 'module' => 'PaymentMethod'],
 
-            ['name' => 'view customer addresses', 'guard_name' => 'api', 'apiPath' => '/v1/address/customer/{customer_id}', 'method' => 'GET', 'module' => 'ShippingAddress'],
+            ['name' => 'view customer addresses', 'guard_name' => 'api', 'apiPath' => '/v1/address/customer', 'method' => 'GET', 'module' => 'ShippingAddress'],
             ['name' => 'create shipping address', 'guard_name' => 'api', 'apiPath' => '/v1/address', 'method' => 'POST', 'module' => 'ShippingAddress'],
             ['name' => 'update shipping address', 'guard_name' => 'api', 'apiPath' => '/v1/address/{id}', 'method' => 'PUT', 'module' => 'ShippingAddress'],
             ['name' => 'delete shipping address', 'guard_name' => 'api', 'apiPath' => '/v1/address/{id}', 'method' => 'DELETE', 'module' => 'ShippingAddress'],

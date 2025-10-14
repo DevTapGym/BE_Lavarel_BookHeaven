@@ -8,6 +8,7 @@ use App\Models\Book;
 use App\Http\Resources\CartItemResource;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Exception;
 
@@ -36,6 +37,60 @@ class CartController extends Controller
             return $this->errorResponse(
                 500,
                 'Error creating cart',
+                $th->getMessage()
+            );
+        }
+    }
+
+    public function getMyCart()
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return $this->errorResponse(
+                    401,
+                    'Unauthorized',
+                    'User not authenticated'
+                );
+            }
+
+            // Lấy customer_id từ user
+            $customerId = $user->customer_id;
+
+            if (!$customerId) {
+                return $this->errorResponse(
+                    404,
+                    'Not Found',
+                    'Customer profile not found for this user'
+                );
+            }
+
+            $cart = Cart::with('cartItems.book')->where('customer_id', $customerId)->first();
+            if (!$cart) {
+                return $this->errorResponse(
+                    404,
+                    'Not Found',
+                    'No cart found for this customer'
+                );
+            }
+
+            $cart->load('cartItems.book');
+
+            return $this->successResponse(
+                200,
+                'Cart retrieved successfully',
+                [
+                    'id' => $cart->id,
+                    'total_items' => $cart->count,
+                    'total_price' => $cart->total_price,
+                    'items' => CartItemResource::collection($cart->cartItems),
+                ]
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error retrieving cart',
                 $th->getMessage()
             );
         }
@@ -135,7 +190,6 @@ class CartController extends Controller
         try {
             $validated = $request->validate([
                 'quantity' => 'sometimes|integer|min:1',
-                'is_selected' => 'sometimes|boolean',
             ]);
 
             $cartItem = CartItem::findOrFail($cart_item_id);

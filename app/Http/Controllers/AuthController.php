@@ -126,6 +126,8 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
+        $user->load('customer');
+
         return $this->successResponse(
             200,
             'Get user info successful',
@@ -133,8 +135,152 @@ class AuthController extends Controller
                 'name'      => $user->name,
                 'email'     => $user->email,
                 'is_active' => $user->is_active,
+                'avatar'    => $user->avatar,
+                'date_of_birth' => $user->customer->date_of_birth ?? null,
+                'phone'     => $user->customer->phone ?? null,
+                'gender'    => $user->customer->gender ?? null,
             ]
         );
+    }
+
+    public function updateProfile(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return $this->errorResponse(
+                    401,
+                    'Unauthorized',
+                    'User not authenticated'
+                );
+            }
+
+            $validated = $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'date_of_birth' => 'sometimes|date|before:today',
+                'phone' => 'sometimes|string|max:10|regex:/^0[0-9]{9,10}$/',
+                'gender' => 'sometimes|in:Male,Female,Other',
+            ]);
+
+            return DB::transaction(function () use ($user, $validated) {
+                // Cập nhật name trong bảng users
+                if (isset($validated['name'])) {
+                    $user->update(['name' => $validated['name']]);
+                }
+
+                // Cập nhật các trường còn lại trong bảng customers
+                $customer = $user->customer;
+                if (!$customer) {
+                    return $this->errorResponse(
+                        404,
+                        'Not Found',
+                        'Customer profile not found'
+                    );
+                }
+
+                $customerData = [];
+                if (isset($validated['name'])) {
+                    $customerData['name'] = $validated['name'];
+                }
+                if (isset($validated['date_of_birth'])) {
+                    $customerData['date_of_birth'] = $validated['date_of_birth'];
+                }
+                if (isset($validated['phone'])) {
+                    $customerData['phone'] = $validated['phone'];
+                }
+                if (isset($validated['gender'])) {
+                    $customerData['gender'] = $validated['gender'];
+                }
+
+                if (!empty($customerData)) {
+                    $customer->update($customerData);
+                }
+
+                // Load lại quan hệ để lấy dữ liệu mới nhất
+                $user->load('customer');
+
+                return $this->successResponse(
+                    200,
+                    'Profile updated successfully',
+                    [
+                        'name'          => $user->name,
+                        'email'         => $user->email,
+                        'is_active'     => $user->is_active,
+                        'avatar'        => $user->avatar,
+                        'date_of_birth' => $user->customer->date_of_birth ?? null,
+                        'phone'         => $user->customer->phone ?? null,
+                        'gender'        => $user->customer->gender ?? null,
+                    ]
+                );
+            });
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                500,
+                'Internal server error',
+                'Could not update profile: ' . $e->getMessage()
+            );
+        }
+    }
+
+    public function changePassword(Request $request)
+    {
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return $this->errorResponse(
+                    401,
+                    'Unauthorized',
+                    'User not authenticated'
+                );
+            }
+
+            $validated = $request->validate([
+                'current_password' => 'required|string',
+                'new_password' => 'required|string|min:8|confirmed',
+                'new_password_confirmation' => 'required|string',
+            ]);
+
+            // Kiểm tra mật khẩu hiện tại có đúng không
+            if (!password_verify($validated['current_password'], $user->password)) {
+                return $this->errorResponse(
+                    400,
+                    'Bad Request',
+                    'Current password is incorrect'
+                );
+            }
+
+            // Kiểm tra mật khẩu mới có khác mật khẩu cũ không
+            if (password_verify($validated['new_password'], $user->password)) {
+                return $this->errorResponse(
+                    400,
+                    'Bad Request',
+                    'New password must be different from current password'
+                );
+            }
+
+            // Cập nhật mật khẩu mới
+            $user->update([
+                'password' => bcrypt($validated['new_password'])
+            ]);
+
+            // Vô hiệu hóa tất cả token hiện tại để buộc người dùng đăng nhập lại
+            //$user->current_jti = null;
+            $user->save();
+
+            return $this->successResponse(
+                200,
+                'Password changed successfully',
+                null
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                500,
+                'Internal server error',
+                'Could not change password: ' . $e->getMessage()
+            );
+        }
     }
 
     public function logout(Request $request)
@@ -199,6 +345,12 @@ class AuthController extends Controller
 
             $accessToken = JWTAuth::claims($customClaims)->fromUser($user);
 
+            // Cập nhật current_jti với JTI của access token mới
+            $accessPayload = JWTAuth::setToken($accessToken)->getPayload();
+            $accessJti = $accessPayload->get('jti');
+            $user->current_jti = $accessJti;
+            $user->save();
+
             $newRefreshTokenPayload = [
                 'sub' => $user->id,
                 'jti' => Str::uuid()->toString(),
@@ -216,7 +368,7 @@ class AuthController extends Controller
             return $this->successResponse(
                 200,
                 'Token refreshed',
-                $this->formatAuthData($accessToken, $user, $newRefreshToken)
+                $this->formatAuthData($accessToken, $user)
             )->cookie(
                 'refresh_token',
                 $newRefreshToken,
@@ -233,14 +385,18 @@ class AuthController extends Controller
 
     protected function formatAuthData($token, $user)
     {
+        $user->load('customer');
         $data = [
             'access_token' => $token,
             'expires_in'   => Auth::factory()->getTTL() * 60,
             'user' => [
-                'id'    => $user->id,
-                'name'  => $user->name,
-                'email' => $user->email,
+                'name'      => $user->name,
+                'email'     => $user->email,
                 'is_active' => $user->is_active,
+                'avatar'    => $user->avatar,
+                'date_of_birth' => $user->customer->date_of_birth ?? null,
+                'phone'     => $user->customer->phone ?? null,
+                'gender'    => $user->customer->gender ?? null,
             ]
         ];
 

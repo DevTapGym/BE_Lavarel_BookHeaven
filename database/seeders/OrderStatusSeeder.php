@@ -25,5 +25,7 @@ class OrderStatusSeeder extends Seeder
                 ['description' => $status['description'], 'sequence' => $status['sequence']]
             );
         }
+
+        $this->command->info('Order statuses have been seeded successfully!');
     }
 }

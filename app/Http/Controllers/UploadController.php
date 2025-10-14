@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Book;
 use App\Models\BookImage;
+use App\Models\PaymentMethod;
 use App\Models\User;
 
 class UploadController extends Controller
@@ -141,6 +142,50 @@ class UploadController extends Controller
                 404,
                 'Book not found',
                 'The specified book does not exist.'
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                500,
+                'Internal Server Error',
+                $e->getMessage(),
+            );
+        }
+    }
+
+    public function uploadLogoPaymentMethod(Request $request)
+    {
+        try {
+            $request->validate([
+                'image' => 'required|file|mimes:jpg,jpeg,png,webp|max:5120',
+                'payment_id' => 'required|integer|exists:payment_methods,id',
+            ]);
+
+            // Kiểm tra sách có tồn tại không
+            $payment = PaymentMethod::findOrFail($request->payment_id);
+
+            $file = $request->file('image');
+            $extension = $file->getClientOriginalExtension();
+
+            $fileName = 'Logo_Payment_' . $payment->id . '_' . now()->format('Ymd_His') . '.' . $extension;
+
+            $path = $file->storeAs('Logo', $fileName, 'public');
+            $url = Storage::url($path);
+
+            // Cập nhật thumbnail cho sách
+            $payment->update([
+                'logo_url' => $url
+            ]);
+
+            return $this->successResponse(
+                200,
+                'Upload logo payment method successful',
+                $payment->fresh(),
+            );
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse(
+                404,
+                'Not Found',
+                'Payment method does not exist'
             );
         } catch (Exception $e) {
             return $this->errorResponse(

@@ -15,15 +15,14 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             RoleSeeder::class,
-            //UserSeeder::class,
-            // CategorySeeder::class,
-            // BookSeeder::class,
-            // BookCategorySeeder::class, // Chạy sau BookSeeder và CategorySeeder
-            // SupplierSeeder::class,
-            // AddressTagSeeder::class,
-            // PaymentSeeder::class,
-            // OrderStatusSeeder::class,
-            //BookCategorySeeder::class,
+            UserSeeder::class,
+            CategorySeeder::class,
+            BookSeeder::class,
+            SupplierSeeder::class,
+            AddressTagSeeder::class,
+            PaymentSeeder::class,
+            OrderStatusSeeder::class,
+            BookCategorySeeder::class,
         ]);
     }
 }
