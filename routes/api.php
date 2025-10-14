@@ -55,7 +55,7 @@ Route::prefix('/v1')->group(function () {
         Route::get('/images/{book_id}', [BookImageController::class, 'getBookImages'])->name('view.book.images');
     });
 
-    Route::prefix('/category')->group(function () {
+    Route::prefix('/categories')->group(function () {
         Route::get('/', [CategoryController::class, 'index']);
         Route::get('/page', [CategoryController::class, 'indexPaginated']);
     });
@@ -124,7 +124,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::delete('/feature/book/{book_id}', [BookFeatureController::class, 'destroyAll'])->name('delete.all.book.features');
     });
 
-    Route::prefix('/category')->group(function () {
+    Route::prefix('/categories')->group(function () {
         Route::post('/', [CategoryController::class, 'store'])->name('create.category');
         Route::put('/', [CategoryController::class, 'update'])->name('update.category');
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('delete.category');
