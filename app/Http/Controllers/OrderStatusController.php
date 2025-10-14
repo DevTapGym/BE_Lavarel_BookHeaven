@@ -13,7 +13,10 @@ class OrderStatusController extends Controller
         return $this->successResponse(
             200,
             'Order status retrieved successfully',
-            $statuses
+            [
+                'id' => $statuses->id,
+                'status' => $statuses->name,
+            ]
         );
     }
 

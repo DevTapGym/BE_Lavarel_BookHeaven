@@ -114,7 +114,7 @@ class AuthController extends Controller
                 'Register successful',
                 [
                     'id'     => $user->id,
-                    'name'        => $user->name,
+                    'username'        => $user->name,
                     'email'       => $user->email,
                     'is_active'   => $user->is_active,
                     'createdAt' => $user->created_at,

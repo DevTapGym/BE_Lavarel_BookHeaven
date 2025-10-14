@@ -129,7 +129,6 @@ class DashBoardController extends Controller
             }
 
             $monthlyRevenue = [];
-            $monthlyOrderCount = [];
             $totalYearRevenue = 0;
             $totalYearOrders = 0;
 
