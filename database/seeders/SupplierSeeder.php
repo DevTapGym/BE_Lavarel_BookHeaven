@@ -79,5 +79,7 @@ class SupplierSeeder extends Seeder
         foreach ($suppliers as $supplier) {
             Supplier::create($supplier);
         }
+
+        $this->command->info('Suppliers have been seeded successfully!');
     }
 }

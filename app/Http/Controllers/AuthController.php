@@ -159,8 +159,8 @@ class AuthController extends Controller
             $validated = $request->validate([
                 'name' => 'sometimes|string|max:255',
                 'date_of_birth' => 'sometimes|date|before:today',
-                'phone' => 'sometimes|string|max:20',
-                'gender' => 'sometimes|in:male,female,other',
+                'phone' => 'sometimes|string|max:10|regex:/^0[0-9]{9,10}$/',
+                'gender' => 'sometimes|in:Male,Female,Other',
             ]);
 
             return DB::transaction(function () use ($user, $validated) {
@@ -266,7 +266,7 @@ class AuthController extends Controller
             ]);
 
             // Vô hiệu hóa tất cả token hiện tại để buộc người dùng đăng nhập lại
-            $user->current_jti = null;
+            //$user->current_jti = null;
             $user->save();
 
             return $this->successResponse(

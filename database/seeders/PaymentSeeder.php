@@ -44,5 +44,7 @@ class PaymentSeeder extends Seeder
         foreach ($payments as $payment) {
             PaymentMethod::create($payment);
         }
+
+        $this->command->info('Payment methods have been seeded successfully!');
     }
 }
