@@ -25,6 +25,7 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UploadController;
 
+
 // ---------------------
 // Public routes 
 // ---------------------

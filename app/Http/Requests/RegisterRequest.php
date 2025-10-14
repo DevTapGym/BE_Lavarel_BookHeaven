@@ -8,9 +8,10 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 
 /**
- * @property string $name 
+ * @property string $username 
  * @property string $email
  * @property string $password
+ * @property string $phone
  */
 class RegisterRequest extends FormRequest
 {

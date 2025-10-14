@@ -82,7 +82,7 @@ class AuthController extends Controller
         return DB::transaction(function () use ($request) {
             // Tạo User
             $user = User::create([
-                'username'      => $request->name,
+                'name'      => $request->username,
                 'password'  => bcrypt($request->password),
                 'email'     => $request->email,
                 'is_active' => false,
@@ -93,9 +93,9 @@ class AuthController extends Controller
 
             // Tạo Customer tương ứng
             $customer = Customer::create([
-                'name'    => $request->name,
+                'name'    => $request->username,
                 'email'   => $request->email,
-                'phone'   => null, // Sẽ được cập nhật sau
+                'phone'   => $request->phone, // Sẽ được cập nhật sau
                 'address' => null, // Sẽ được cập nhật sau
             ]);
 
