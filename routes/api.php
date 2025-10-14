@@ -26,6 +26,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\PromotionController;
 
+
 // ---------------------
 // Public routes 
 // ---------------------
