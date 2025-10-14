@@ -8,6 +8,30 @@ use Throwable;
 
 class CategoryController extends Controller
 {
+
+    public function index()
+    {
+        try {
+            $categories = Category::all();
+
+            $categories->load('books');
+            return $this->successResponse(
+                200,
+                'Categories retrieved successfully',
+                [
+                    'id' => $categories->id,
+                    'name' => $categories->name,
+                    'book' => $categories->books,
+                ]
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error retrieving categories',
+                $th->getMessage()
+            );
+        }
+    }
     public function indexPaginated(Request $request)
     {
         $pageSize = $request->query('size', 10);

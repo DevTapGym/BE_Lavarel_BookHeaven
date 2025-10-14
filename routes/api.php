@@ -56,7 +56,8 @@ Route::prefix('/v1')->group(function () {
     });
 
     Route::prefix('/category')->group(function () {
-        Route::get('/', [CategoryController::class, 'indexPaginated']);
+        Route::get('/', [CategoryController::class, 'index']);
+        Route::get('/page', [CategoryController::class, 'indexPaginated']);
     });
 
     Route::prefix('/promotions')->group(function () {
@@ -188,7 +189,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::get('/{order}', [OrderController::class, 'show'])->name('show.order');
     });
 
-    Route::prefix('/order-status')->group(function () {
+    Route::prefix('/shippingStatus')->group(function () {
         Route::get('/', [OrderStatusController::class, 'index'])->name('view.order.statuses');
         Route::post('/', [OrderStatusController::class, 'store'])->name('create.order.status');
         Route::put('/', [OrderStatusController::class, 'update'])->name('update.order.status');
