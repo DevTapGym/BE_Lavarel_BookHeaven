@@ -18,11 +18,7 @@ class CategoryController extends Controller
             return $this->successResponse(
                 200,
                 'Categories retrieved successfully',
-                [
-                    'id' => $categories->id,
-                    'name' => $categories->name,
-                    'book' => $categories->books,
-                ]
+                $categories
             );
         } catch (Throwable $th) {
             return $this->errorResponse(
