@@ -387,17 +387,19 @@ class AuthController extends Controller
     {
         $user->load('customer');
         $data = [
-            'access_token' => $token,
-            'expires_in'   => Auth::factory()->getTTL() * 60,
-            'user' => [
-                'name'      => $user->name,
+            'account' => [
+                'id'        => $user->id,
                 'email'     => $user->email,
-                'is_active' => $user->is_active,
+                'name'      => $user->name,
                 'avatar'    => $user->avatar,
-                'date_of_birth' => $user->customer->date_of_birth ?? null,
                 'phone'     => $user->customer->phone ?? null,
+                'role'     => $user->roles()->pluck('name')->first() ?? 'user',
+                'customer' => $user->customer,
+                'date_of_birth' => $user->customer->date_of_birth ?? null,
                 'gender'    => $user->customer->gender ?? null,
-            ]
+                'is_active' => $user->is_active,
+            ],
+            'access_token' => $token,
         ];
 
         return $data;
