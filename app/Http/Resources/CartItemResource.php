@@ -14,9 +14,13 @@ class CartItemResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // Lấy ngẫu nhiên một category từ các categories của sách
+        $randomCategory = $this->book->categories()->inRandomOrder()->first();
+
         return [
             'id' => $this->id,
             'book_id' => $this->book_id,
+            'category_id' => $randomCategory ? $randomCategory->id : null,
             'book_name' => $this->book->title,
             'book_author' => $this->book->author,
             'book_thumbnail' => $this->book->thumbnail,

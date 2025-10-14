@@ -25,9 +25,9 @@ class OrderResource extends JsonResource
             // Shipping Address Information
             'shipping_address' => [
                 'id' => $this->shippingAddress->id ?? null,
+                'recipient_name' => $this->shippingAddress->recipient_name ?? null,
                 'address' => $this->shippingAddress->address ?? null,
-                'phone' => $this->shippingAddress->phone ?? null,
-                'customer_name' => $this->shippingAddress->customer_name ?? null,
+                'phone_number' => $this->shippingAddress->phone_number ?? null,
                 'tag_name' => $this->shippingAddress->tag->name ?? null,
             ],
 
@@ -46,6 +46,7 @@ class OrderResource extends JsonResource
                     return [
                         'id' => $statusHistory->id,
                         'status_name' => $statusHistory->orderStatus->name ?? null,
+                        'description' => $statusHistory->orderStatus->description ?? null,
                         'status_sequence' => $statusHistory->orderStatus->sequence ?? null,
                         'note' => $statusHistory->note,
                         'created_at' => $statusHistory->created_at,

@@ -19,15 +19,13 @@ class OrderItemResource extends JsonResource
             'quantity' => $this->quantity,
             'unit_price' => $this->price,
             'total_price' => $this->price * $this->quantity,
-            'book' => [
-                'id' => $this->book->id,
-                'title' => $this->book->title,
-                'author' => $this->book->author,
-                'thumbnail' => $this->book->thumbnail,
-                'description' => $this->book->description,
-                'current_price' => $this->book->price,
-                'sale_off' => $this->book->sale_off,
-            ],
+            'book_id' => $this->book->id,
+            'book_title' => $this->book->title,
+            'book_author' => $this->book->author,
+            'book_thumbnail' => $this->book->thumbnail,
+            'book_description' => $this->book->description,
+            'book_current_price' => $this->book->price,
+            'book_sale_off' => $this->book->sale_off,
         ];
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Models\Book;
@@ -18,11 +19,17 @@ class UploadController extends Controller
         try {
             $request->validate([
                 'image' => 'required|file|mimes:jpg,jpeg,png,webp|max:5120',
-                'user_id' => 'required|integer|exists:books,id',
             ]);
 
-            // Kiểm tra sách có tồn tại không
-            $user = User::findOrFail($request->user_id);
+            $user = Auth::user();
+
+            if (!$user) {
+                return $this->errorResponse(
+                    401,
+                    'Unauthorized',
+                    'User not authenticated'
+                );
+            }
 
             $file = $request->file('image');
             $extension = $file->getClientOriginalExtension();
@@ -32,7 +39,15 @@ class UploadController extends Controller
             $path = $file->storeAs('Avatar', $fileName, 'public');
             $url = Storage::url($path);
 
-            // Cập nhật thumbnail cho sách
+            // Xóa avatar cũ nếu có (tùy chọn)
+            if ($user->avatar) {
+                $oldPath = str_replace('/storage/', '', $user->avatar);
+                if (Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+            }
+
+            // Cập nhật avatar cho user
             $user->update([
                 'avatar' => $url
             ]);
@@ -40,13 +55,13 @@ class UploadController extends Controller
             return $this->successResponse(
                 200,
                 'Upload avatar successful',
-                $user->fresh(),
-            );
-        } catch (ModelNotFoundException $e) {
-            return $this->errorResponse(
-                404,
-                'Not Found',
-                'User does not exist.'
+                [
+                    'user_id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'avatar' => $user->avatar,
+                    'updated_at' => $user->updated_at
+                ]
             );
         } catch (Exception $e) {
             return $this->errorResponse(
