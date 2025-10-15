@@ -20,6 +20,7 @@ class CartItemResource extends JsonResource
         return [
             'id' => $this->id,
             'book_id' => $this->book_id,
+            'is_selected' => (bool) ($this->is_selected ?? false),
             'category_id' => $randomCategory ? $randomCategory->id : null,
             'book_name' => $this->book->title,
             'book_author' => $this->book->author,
