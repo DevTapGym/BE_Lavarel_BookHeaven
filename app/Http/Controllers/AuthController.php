@@ -80,12 +80,13 @@ class AuthController extends Controller
     public function register(RegisterRequest $request)
     {
         return DB::transaction(function () use ($request) {
+
             // Tạo User
             $user = User::create([
                 'name'      => $request->username,
                 'password'  => bcrypt($request->password),
                 'email'     => $request->email,
-                'is_active' => false,
+                'is_active' => $request->for === 'web' ? true : false,
             ]);
 
             // Gán role cho user

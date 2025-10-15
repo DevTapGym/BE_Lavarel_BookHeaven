@@ -90,6 +90,34 @@ class DashBoardController extends Controller
         }
     }
 
+    public function getTop5BookSold()
+    {
+        try {
+
+            $topBooks = Book::select(
+                'id as bookID',
+                'name as bookName',
+                'sold as totalQuantity'
+            )
+                ->orderByDesc('sold')
+                ->limit(5)
+                ->get();
+
+            return $this->successResponse(
+                200,
+                'Top 5 best-selling books retrieved successfully',
+                $topBooks
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                500,
+                'Internal Server Error',
+                'Failed to retrieve top 5 books: ' . $e->getMessage()
+            );
+        }
+    }
+
+
     public function getBasicCounts()
     {
         try {

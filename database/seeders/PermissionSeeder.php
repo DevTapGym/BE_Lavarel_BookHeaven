@@ -151,7 +151,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'view dashboard 9', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/view9', 'method' => 'GET', 'module' => 'Dashboard'],
             ['name' => 'view dashboard 6', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/view6', 'method' => 'GET', 'module' => 'Dashboard'],
             ['name' => 'view dashboard 1', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/view1', 'method' => 'GET', 'module' => 'Dashboard'],
-
+            ['name' => 'view dashboard top 5 books sold', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/get-top5-books-sold', 'method' => 'GET', 'module' => 'Dashboard'],
         ];
 
         $added = false;
