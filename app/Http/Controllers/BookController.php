@@ -4,14 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Book;
 use App\Models\ImportReceipt;
-use App\Models\ImportReceiptDetail;
-use App\Models\Supply;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Category;
 use App\Http\Resources\BookListResource;
 use Throwable;
 use Exception;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 
 class BookController extends Controller
 {
@@ -32,96 +32,48 @@ class BookController extends Controller
     public function indexPaginatedForWeb(Request $request)
     {
         try {
-            $filter = $request->input('filter', null);
-            $sort = $request->input('sort', null);
-            $page = $request->input('page', 1);
             $pageSize = $request->input('size', 10);
+            $page = $request->input('page', 1);
 
-            $query = Book::with(['categories', 'bookImages']);
+            $books = QueryBuilder::for(Book::class)
+                ->allowedFilters([
+                    // Lọc theo tên sách (title)
+                    AllowedFilter::partial('title'),
+                    AllowedFilter::partial('mainText', 'title'),
 
-            if ($filter) {
-                $conditions = explode(' and ', $filter);
-                foreach ($conditions as $condition) {
-                    // Xử lý lọc theo khoảng giá: price>:50000 hoặc price<:110000
-                    if (preg_match('/^price([><=]+):(\d+)$/', trim($condition), $matches)) {
-                        $operator = $matches[1];
-                        $value = (float) $matches[2];
+                    // Lọc theo tên thể loại
+                    AllowedFilter::callback('category', function ($query, $value) {
+                        $categories = is_array($value)
+                            ? $value
+                            : explode(',', $value); // Tách chuỗi thành mảng nếu truyền bằng dấu phẩy
 
-                        if ($operator === '>') {
-                            $query->where('price', '>', $value);
-                        } elseif ($operator === '<') {
-                            $query->where('price', '<', $value);
-                        } elseif ($operator === '>=') {
-                            $query->where('price', '>=', $value);
-                        } elseif ($operator === '<=') {
-                            $query->where('price', '<=', $value);
-                        } elseif ($operator === '=') {
-                            $query->where('price', '=', $value);
-                        }
-                        continue;
-                    }
-
-                    // Logic cũ: Lọc theo field~value
-                    $parts = explode('~', $condition);
-                    $field = array_shift($parts);
-                    $values = $parts;
-                    if (count($values) > 0) {
-                        // Lọc theo category.name
-                        if ($field === 'category.name') {
-                            $query->whereHas('categories', function ($q) use ($values) {
-                                $q->where(function ($sub) use ($values) {
-                                    foreach ($values as $value) {
-                                        $sub->orWhere('categories.name', 'like', '%' . trim($value, "' ") . '%');
-                                    }
-                                });
-                            });
-                        }
-                        // Lọc theo mainText (title)
-                        elseif ($field === 'mainText' || $field === 'title' || $field === 'name') {
-                            $query->where(function ($q) use ($values) {
-                                foreach ($values as $value) {
-                                    $q->orWhere('title', 'like', '%' . trim($value, "' ") . '%');
+                        $query->whereHas('categories', function ($q) use ($categories) {
+                            $q->where(function ($sub) use ($categories) {
+                                foreach ($categories as $cat) {
+                                    $sub->orWhere('categories.name', 'like', '%' . trim($cat) . '%');
                                 }
                             });
-                        } else {
-                            $query->where(function ($q) use ($field, $values) {
-                                foreach ($values as $value) {
-                                    $q->orWhere($field, 'like', '%' . trim($value, "' ") . '%');
-                                }
-                            });
-                        }
-                    }
-                }
-            }
-            // Xử lý sort: hỗ trợ updatedAt,desc | price | price,desc | sold,desc
-            if ($sort) {
-                $sortParts = explode(',', $sort);
-                $sortField = $sortParts[0] ?? 'updatedAt';
-                $sortDir = strtolower($sortParts[1] ?? '');
+                        });
+                    }),
 
-                // Map field FE sang DB
-                $fieldMap = [
-                    'sold' => 'sold',
-                    'price' => 'price',
-                    'updatedAt' => 'updated_at',
-                    'created_at' => 'created_at',
-                    'title' => 'title',
-                ];
-                $allowedDirs = ['asc', 'desc'];
-                $dbField = $fieldMap[$sortField] ?? 'updated_at';
 
-                // Nếu chỉ truyền price thì mặc định asc
-                if ($sortField === 'price' && $sortDir === '') {
-                    $query->orderBy('price', 'asc');
-                } else {
-                    $dir = in_array($sortDir, $allowedDirs) ? $sortDir : 'desc';
-                    $query->orderBy($dbField, $dir);
-                }
-            } else {
-                $query->orderByDesc('updated_at');
-            }
-
-            $books = $query->paginate($pageSize, ['*'], 'page', $page);
+                    // Lọc theo khoảng giá
+                    AllowedFilter::callback('price_min', function ($query, $value) {
+                        $query->where('price', '>=', $value);
+                    }),
+                    AllowedFilter::callback('price_max', function ($query, $value) {
+                        $query->where('price', '<=', $value);
+                    }),
+                ])
+                ->allowedSorts([
+                    'sold',           // sold,desc
+                    'created_at',     // created_at,desc
+                    'price',          // price,asc hoặc price,desc
+                    'title',          // title,asc hoặc title,desc
+                ])
+                ->defaultSort('-sold') // Mặc định sort theo updated_at giảm dần
+                ->with(['categories', 'bookImages'])
+                ->paginate($pageSize, ['*'], 'page', $page);
 
             return response()->json([
                 'status' => 0,
