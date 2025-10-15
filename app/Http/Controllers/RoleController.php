@@ -12,11 +12,12 @@ use Exception;
 
 class RoleController extends Controller
 {
-    public function getAllRoles()
+    public function getAllRoles(Request $request)
     {
-        $roles = Role::with('permissions')->get();
+        $pageSize = $request->query('size', 10);
+        $paginator = Role::with('permissions')->paginate($pageSize);
 
-        $formattedRoles = $roles->map(function ($role) {
+        $formattedRoles = $paginator->getCollection()->map(function ($role) {
             return [
                 'id' => $role->id,
                 'name' => $role->name,
@@ -40,11 +41,13 @@ class RoleController extends Controller
                 })
             ];
         });
+        $paginator->setCollection($formattedRoles);
+        $data = $this->paginateResponse($paginator);
 
         return $this->successResponse(
             200,
             'All roles retrieved successfully',
-            $formattedRoles
+            $data
         );
     }
 
