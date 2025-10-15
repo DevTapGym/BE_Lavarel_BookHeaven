@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\Book;
 use App\Models\User;
-use App\Models\ShippingAddress;
 use App\Models\CartItem;
 use Illuminate\Support\Facades\Auth;
 use App\Models\OrderStatus;
@@ -241,7 +240,7 @@ class OrderController extends Controller
                 'customer_id'         => $request->customerId,
             ]);
 
-            $totalAmount = 0; 
+            $totalAmount = 0;
 
             foreach ($request->orderItems as $item) {
                 $book = Book::find($item['bookId']);
@@ -262,7 +261,7 @@ class OrderController extends Controller
                     );
                 }
 
-   
+
                 $itemTotal = $book->price * $item['quantity'];
                 $totalAmount += $itemTotal;
 
@@ -330,7 +329,7 @@ class OrderController extends Controller
                     if ($promotion->is_max_promotion_value && !is_null($promotion->max_promotion_value)) {
                         $totalPromotionValue = min($totalPromotionValue, (float) $promotion->max_promotion_value);
                     }
-                } else { 
+                } else {
                     $totalPromotionValue = (float) $promotion->promotion_value;
                 }
 
@@ -339,7 +338,7 @@ class OrderController extends Controller
                     $promotion->decrement('qty_limit');
                 }
 
-               
+
                 $order->promotion_id = $promotion->id;
                 $order->total_promotion_value = $totalPromotionValue;
 
