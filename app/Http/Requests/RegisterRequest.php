@@ -12,6 +12,7 @@ use Illuminate\Http\Exceptions\HttpResponseException;
  * @property string $email
  * @property string $password
  * @property string $phone
+ * @property string $for
  */
 class RegisterRequest extends FormRequest
 {
@@ -29,6 +30,7 @@ class RegisterRequest extends FormRequest
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'nullable|string|max:20',
             'password' => 'required|string|min:6|confirmed',
+            'for' => 'sometimes|string|in:web,mobile',
         ];
     }
 
