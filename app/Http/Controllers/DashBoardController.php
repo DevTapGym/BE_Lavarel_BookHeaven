@@ -9,6 +9,7 @@ use App\Models\Book;
 use App\Models\Customer;
 use App\Models\Employee;
 use App\Models\Category;
+use Illuminate\Support\Facades\DB;
 use Exception;
 
 class DashBoardController extends Controller
@@ -194,6 +195,129 @@ class DashBoardController extends Controller
             );
         }
     }
+
+    public function view9()
+    {
+        try {
+            // Lấy thống kê số lượng theo giới tính từ bảng customers
+            $rawStats = Customer::select('gender', DB::raw('COUNT(*) as total'))
+                ->whereIn('gender', ['Male', 'Female', 'Other'])
+                ->groupBy('gender')
+                ->pluck('total', 'gender'); // returns associative collection
+
+            $mapping = [
+                'Male' => 'Nam',
+                'Female' => 'Nữ',
+                'Other' => 'Khác',
+            ];
+
+            $totalAll = $rawStats->sum();
+
+            $result = [];
+            foreach ($mapping as $key => $label) {
+                $count = (int) ($rawStats[$key] ?? 0);
+                $percentage = $totalAll > 0 ? round($count / $totalAll * 100, 2) : 0;
+                // Nếu phần trăm là số nguyên (vd 33.00) thì có thể cast về float giữ 2 decimal tuỳ yêu cầu FE
+                $result[] = [
+                    'gender' => $label,
+                    'genderCount' => $count,
+                    'percentage' => $percentage,
+                ];
+            }
+
+            return $this->successResponse(
+                200,
+                'Get view9 success',
+                $result
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                500,
+                'Internal Server Error',
+                'Failed to get gender statistics: ' . $e->getMessage()
+            );
+        }
+    }
+
+    public function view6()
+    {
+        try {
+            $tongSoLuongKhachHang = Customer::count();
+            $tongSoLuongSach = Book::count();
+            $tongSoLuongNhanVien = Employee::count();
+            $tongSoLuongDatHangThanhCong = Order::whereHas('statusHistories', function ($query) {
+                $query->whereHas('orderStatus', function ($statusQuery) {
+                    $statusQuery->where('name', 'Delivered')->where('sequence', 4);
+                });
+            })->count();
+
+            $data = [
+                'tongSoLuongKhachHang' => $tongSoLuongKhachHang,
+                'tongSoLuongSach' => $tongSoLuongSach,
+                'tongSoLuongNhanVien' => $tongSoLuongNhanVien,
+                'tongSoLuongDatHangThanhCong' => $tongSoLuongDatHangThanhCong,
+            ];
+
+            return $this->successResponse(
+                200,
+                'Get view6 success',
+                $data
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                500,
+                'Internal Server Error',
+                'Failed to get view6: ' . $e->getMessage()
+            );
+        }
+    }
+
+    public function view1()
+    {
+        try {
+            // Lấy tất cả tên thể loại từ DB
+            $categories = DB::table('categories')
+                ->pluck('name')
+                ->toArray();
+
+            // Lấy số lượng sách bán ra theo từng thể loại
+            $soldByCategory = DB::table('categories')
+                ->select('categories.name as theLoai', DB::raw('COALESCE(SUM(order_items.quantity), 0) as soLuongBan'))
+                ->leftJoin('book_category', 'categories.id', '=', 'book_category.category_id')
+                ->leftJoin('books', 'book_category.book_id', '=', 'books.id')
+                ->leftJoin('order_items', 'books.id', '=', 'order_items.book_id')
+                ->leftJoin('orders', 'order_items.order_id', '=', 'orders.id')
+                ->leftJoin('order_status_histories', 'orders.id', '=', 'order_status_histories.order_id')
+                ->leftJoin('order_statuses', 'order_status_histories.order_status_id', '=', 'order_statuses.id')
+                ->where('order_statuses.name', 'Delivered')
+                ->where('order_statuses.sequence', 4)
+                ->whereIn('categories.name', $categories)
+                ->groupBy('categories.name')
+                ->pluck('soLuongBan', 'theLoai');
+
+            // Đảm bảo trả về đủ các thể loại, kể cả khi không có đơn hàng
+            $result = [];
+            foreach ($categories as $cat) {
+                $result[] = [
+                    'theLoai' => $cat,
+                    'soLuongBan' => (int)($soldByCategory[$cat] ?? 0)
+                ];
+            }
+
+            return $this->successResponse(
+                200,
+                'Get view1 success',
+                $result
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                500,
+                'Internal Server Error',
+                'Failed to get view1: ' . $e->getMessage()
+            );
+        }
+    }
+
 
     public function getTopCategoriesByYear(Request $request)
     {

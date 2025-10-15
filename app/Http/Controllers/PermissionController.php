@@ -7,6 +7,18 @@ use App\Models\Permission;
 
 class PermissionController extends Controller
 {
+
+    public function index()
+    {
+        $permissions = Permission::all();
+
+        return $this->successResponse(
+            200,
+            'All permissions retrieved successfully',
+            $permissions
+        );
+    }
+
     public function indexPaginated(Request $request)
     {
         $pageSize = $request->query('size', 10);

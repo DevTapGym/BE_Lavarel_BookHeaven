@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\Customer;
 use App\Models\Cart;
-use App\Traits\ApiResponse;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Exception;
+use App\Http\Resources\AccountResource;
 
 
 class AuthController extends Controller
@@ -95,8 +95,9 @@ class AuthController extends Controller
             $customer = Customer::create([
                 'name'    => $request->username,
                 'email'   => $request->email,
-                'phone'   => $request->phone, // Sẽ được cập nhật sau
+                'phone'   => $request->phone,
                 'address' => null, // Sẽ được cập nhật sau
+                'gender' => 'Other',
             ]);
 
             // Liên kết User với Customer (cần thêm customer_id vào bảng users)
@@ -149,6 +150,27 @@ class AuthController extends Controller
             ]
         );
     }
+
+    public function account()
+    {
+        $user = Auth::user();
+
+        $user->load([
+            'customer.cart.cartItems.book.bookImages',
+            'customer.cart.cartItems.book.categories',
+            'roles'
+        ]);
+
+        return $this->successResponse(
+            200,
+            'Get user info successful',
+            [
+                ['account' => new AccountResource($user)]
+            ]
+        );
+    }
+
+
 
     public function updateProfile(Request $request)
     {

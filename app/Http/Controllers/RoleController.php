@@ -20,9 +20,24 @@ class RoleController extends Controller
             return [
                 'id' => $role->id,
                 'name' => $role->name,
-                'created_at' => $role->created_at,
-                'updated_at' => $role->updated_at,
+                'createdAt' => $role->created_at,
+                'updatedAt' => $role->updated_at,
+                'createdBy' => $role->createdBy ?? null,
+                'updatedBy' => $role->updatedBy ?? null,
                 'permissions_count' => $role->permissions->count(),
+                'permissions' => $role->permissions->map(function ($permission) {
+                    return [
+                        'id' => $permission->id,
+                        'name' => $permission->name,
+                        'apiPath' => $permission->apiPath ?? null,
+                        'method' => $permission->method ?? null,
+                        'module' => $permission->module ?? null,
+                        'createdAt' => $permission->created_at,
+                        'updatedAt' => $permission->updated_at,
+                        'createdBy' => $permission->createdBy ?? null,
+                        'updatedBy' => $permission->updatedBy ?? null,
+                    ];
+                })
             ];
         });
 
@@ -48,8 +63,10 @@ class RoleController extends Controller
         $formattedRole = [
             'id' => $role->id,
             'name' => $role->name,
-            'created_at' => $role->created_at,
-            'updated_at' => $role->updated_at,
+            'createdAt' => $role->created_at,
+            'updatedAt' => $role->updated_at,
+            'createdBy' => $role->createdBy ?? null,
+            'updatedBy' => $role->updatedBy ?? null,
             'permissions_count' => $role->permissions->count(),
             'permissions' => $role->permissions->map(function ($permission) {
                 return [
@@ -57,6 +74,10 @@ class RoleController extends Controller
                     'apiPath' => $permission->apiPath ?? null,
                     'method' => $permission->method ?? null,
                     'module' => $permission->module ?? null,
+                    'createdAt' => $permission->created_at,
+                    'updatedAt' => $permission->updated_at,
+                    'createdBy' => $permission->createdBy ?? null,
+                    'updatedBy' => $permission->updatedBy ?? null,
                 ];
             })
         ];
@@ -92,13 +113,22 @@ class RoleController extends Controller
             $formattedRole = [
                 'id' => $role->id,
                 'name' => $role->name,
-                'created_at' => $role->created_at,
-                'updated_at' => $role->updated_at,
+                'createdAt' => $role->created_at,
+                'updatedAt' => $role->updated_at,
+                'createdBy' => $role->createdBy ?? null,
+                'updatedBy' => $role->updatedBy ?? null,
                 'permissions_count' => $role->permissions->count(),
                 'permissions' => $role->permissions->map(function ($permission) {
                     return [
                         'id' => $permission->id,
                         'name' => $permission->name,
+                        'apiPath' => $permission->apiPath ?? null,
+                        'method' => $permission->method ?? null,
+                        'module' => $permission->module ?? null,
+                        'createdAt' => $permission->created_at,
+                        'updatedAt' => $permission->updated_at,
+                        'createdBy' => $permission->createdBy ?? null,
+                        'updatedBy' => $permission->updatedBy ?? null,
                     ];
                 })
             ];
@@ -166,13 +196,22 @@ class RoleController extends Controller
             $formattedRole = [
                 'id' => $role->id,
                 'name' => $role->name,
-                'created_at' => $role->created_at,
-                'updated_at' => $role->updated_at,
+                'createdAt' => $role->created_at,
+                'updatedAt' => $role->updated_at,
+                'createdBy' => $role->createdBy ?? null,
+                'updatedBy' => $role->updatedBy ?? null,
                 'permissions_count' => $role->permissions->count(),
                 'permissions' => $role->permissions->map(function ($permission) {
                     return [
                         'id' => $permission->id,
                         'name' => $permission->name,
+                        'apiPath' => $permission->apiPath ?? null,
+                        'method' => $permission->method ?? null,
+                        'module' => $permission->module ?? null,
+                        'createdAt' => $permission->created_at,
+                        'updatedAt' => $permission->updated_at,
+                        'createdBy' => $permission->createdBy ?? null,
+                        'updatedBy' => $permission->updatedBy ?? null,
                     ];
                 })
             ];
