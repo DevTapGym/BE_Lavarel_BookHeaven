@@ -11,10 +11,14 @@ use App\Models\OrderStatus;
 use App\Models\OrderStatusHistory;
 use App\Http\Requests\OrderRequest;
 use App\Http\Requests\PlaceOrderRequest;
+use App\Http\Requests\OrderWebRequest;
 use Illuminate\Support\Facades\DB;
 use App\Models\Cart;
 use Carbon\Carbon;
 use App\Http\Resources\OrderResource;
+use App\Models\InventoryHistory;
+use App\Models\Promotion;
+use App\Models\ShippingAddress;
 
 class OrderController extends Controller
 {
@@ -48,12 +52,8 @@ class OrderController extends Controller
 
     public function show(Order $order)
     {
-        // Load tất cả các quan hệ cần thiết
         $order->load([
             'orderItems.book',
-            'shippingAddress.customer',
-            'shippingAddress.tag',
-            'paymentMethod',
             'statusHistories.orderStatus'
         ]);
 
@@ -78,21 +78,14 @@ class OrderController extends Controller
             );
         }
 
-        // Lấy tất cả đơn hàng của user thông qua customer_id
-        $orders = Order::whereHas('shippingAddress', function ($query) use ($user) {
-            $query->where('customer_id', $user->customer_id);
-        })
+        $orders = Order::where('customer_id', $user->customer_id)
             ->with([
                 'orderItems.book',
-                'shippingAddress.customer',
-                'shippingAddress.tag',
-                'paymentMethod',
                 'statusHistories.orderStatus'
             ])
             ->orderBy('created_at', 'desc')
             ->paginate($pageSize);
 
-        // Transform collection using OrderResource
         $transformedOrders = $orders->getCollection()->map(function ($order) {
             return new OrderResource($order);
         });
@@ -184,6 +177,146 @@ class OrderController extends Controller
         });
     }
 
+    public function createOrderFromWebPayload(OrderWebRequest $request)
+    {
+        return DB::transaction(function () use ($request) {
+            $orderNumber = $this->generateOrderNumber();
+
+            $order = Order::create([
+                'order_number'        => $orderNumber,
+                'total_amount'        => 0,
+                'note'                => null,
+                'shipping_fee'        => 0,
+                'payment_method'      => $request->paymentMethod,
+                'customer_id'         => $request->customerId,
+            ]);
+
+            $totalAmount = 0; 
+
+            foreach ($request->orderItems as $item) {
+                $book = Book::find($item['bookId']);
+
+                if (!$book) {
+                    return $this->errorResponse(
+                        404,
+                        'Not Found',
+                        "Book with ID {$item['bookId']} not found"
+                    );
+                }
+
+                if ($book->quantity < $item['quantity']) {
+                    return $this->errorResponse(
+                        400,
+                        'Bad Request',
+                        "Insufficient stock for book: {$book->title}. Available: {$book->quantity}, Requested: {$item['quantity']}"
+                    );
+                }
+
+   
+                $itemTotal = $book->price * $item['quantity'];
+                $totalAmount += $itemTotal;
+
+
+                $order->orderItems()->create([
+                    'book_id'  => $item['bookId'],
+                    'quantity' => $item['quantity'],
+                    'price'    => $book->price,
+                ]);
+
+                InventoryHistory::create([
+                    'book_id'          => $book->id,
+                    'order_id'         => $order->id,
+                    'type'             => 'OUT',
+                    'qty_stock_before' => $book->quantity,
+                    'qty_change'       => (int) $item['quantity'],
+                    'qty_stock_after'  => $book->quantity - (int) $item['quantity'],
+                    'price'            => $book->price,
+                    'total_price'      => $itemTotal,
+                    'transaction_date' => now(),
+                    'description'      => 'Xuất kho do bán hàng',
+                ]);
+
+                $book->decrement('quantity', $item['quantity']);
+                $book->increment('sold', $item['quantity']);
+            }
+
+            $totalPromotionValue = 0;
+            if ($request->promotionId) {
+                $promotion = Promotion::find($request->promotionId);
+
+                if (!$promotion) {
+                    return $this->errorResponse(404, 'Not Found', 'Promotion not found');
+                }
+
+                if ($promotion->status == '0') {
+                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
+                }
+
+                if (!is_null($promotion->order_min_value) && $totalAmount < (float) $promotion->order_min_value) {
+                    return $this->errorResponse(400, 'Bad Request', 'Đơn hàng chưa đạt giá trị tối thiểu để sử dụng mã khuyến mãi');
+                }
+
+                $now = now();
+                if (($promotion->start_date && $now->lt($promotion->start_date)) || ($promotion->end_date && $now->gt($promotion->end_date))) {
+                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
+                }
+
+
+                if (!is_null($promotion->qty_limit) && (int) $promotion->qty_limit <= 0) {
+                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi đã hết lượt sử dụng');
+                }
+
+                if ($promotion->is_once_per_customer && $request->customerId) {
+                    $usedBefore = Order::where('promotion_id', $promotion->id)
+                        ->where('customer_id', $request->customerId)
+                        ->exists();
+                    if ($usedBefore) {
+                        return $this->errorResponse(400, 'Bad Request', 'Khách hàng đã sử dụng mã khuyến mãi này');
+                    }
+                }
+
+                if ($promotion->promotion_type === 'percent') {
+                    $totalPromotionValue = $totalAmount * ((float) $promotion->promotion_value / 100);
+                    if ($promotion->is_max_promotion_value && !is_null($promotion->max_promotion_value)) {
+                        $totalPromotionValue = min($totalPromotionValue, (float) $promotion->max_promotion_value);
+                    }
+                } else { 
+                    $totalPromotionValue = (float) $promotion->promotion_value;
+                }
+
+                $totalPromotionValue = max(0, min($totalPromotionValue, $totalAmount));
+                if (!is_null($promotion->qty_limit)) {
+                    $promotion->decrement('qty_limit');
+                }
+
+               
+                $order->promotion_id = $promotion->id;
+                $order->total_promotion_value = $totalPromotionValue;
+
+                // Reduce total by discount
+                $totalAmount -= $totalPromotionValue;
+            }
+
+            $order->update([
+                'total_amount' => $totalAmount,
+                'promotion_id' => $order->promotion_id ?? null,
+                'total_promotion_value' => $order->total_promotion_value ?? 0,
+            ]);
+
+
+            $this->createCompletedOrderStatus($order->id, 'Order created successfully');
+
+            $order->load(['orderItems.book', 'statusHistories.orderStatus']);
+
+            return $this->successResponse(
+                201,
+                'Order created successfully',
+                $order
+            );
+        });
+    }
+
+
     public function placeOrder(PlaceOrderRequest $request)
     {
         return DB::transaction(function () use ($request) {
@@ -273,6 +406,8 @@ class OrderController extends Controller
         });
     }
 
+
+
     /**
      * Create initial order status history
      */
@@ -284,6 +419,21 @@ class OrderController extends Controller
             return OrderStatusHistory::create([
                 'order_id' => $orderId,
                 'order_status_id' => $initialStatus->id,
+                'note' => $note
+            ]);
+        }
+
+        return null;
+    }
+
+    private function createCompletedOrderStatus($orderId, $note = 'Order completed')
+    {
+        $completedStatus = OrderStatus::where('name', 'completed')->first();
+
+        if ($completedStatus) {
+            return OrderStatusHistory::create([
+                'order_id' => $orderId,
+                'order_status_id' => $completedStatus->id,
                 'note' => $note
             ]);
         }

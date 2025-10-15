@@ -29,6 +29,7 @@ class OrderRequest extends FormRequest
             'shipping_fee'         => 'required|numeric|min:0',
             'shipping_address_id'  => 'required|exists:shipping_addresses,id',
             'payment_method_id'    => 'required|exists:payment_methods,id',
+            'promotion_id'         => 'nullable|exists:promotions,id',
 
             // Order items
             'items'                => 'required|array|min:1',

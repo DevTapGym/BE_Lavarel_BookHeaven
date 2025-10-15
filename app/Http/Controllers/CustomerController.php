@@ -36,7 +36,7 @@ class CustomerController extends Controller
                 'email' => 'required|email|unique:customers,email',
                 'phone' => 'nullable|string|max:20',
                 'address' => 'nullable|string|max:255',
-                'gender' => 'nullable|in:male,female,other',
+                'gender' => 'nullable|in:Nam,Nữ,Khác',
                 'date_of_birth' => 'nullable|date',
             ]);
 
