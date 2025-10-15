@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Category;
 use App\Http\Resources\BookListResource;
 use Throwable;
+use Exception;
 
 
 class BookController extends Controller
@@ -31,15 +32,91 @@ class BookController extends Controller
 
     public function indexPaginatedForWeb(Request $request)
     {
-        $books = Book::with(['categories.books.bookImages', 'bookImages'])
-            ->paginate($request->input('pageSize', 10));
+        try {
+            $filter = $request->input('filter', null);
+            $sort = $request->input('sort', null);
+            $page = $request->input('page', 1);
+            $pageSize = $request->input('size', 10);
 
-        return response()->json([
-            'status' => 0,
-            'message' => 'Lấy danh sách sách thành công',
-            'data' => new BookListResource($books)
-        ]);
+            $query = Book::with(['categories', 'bookImages']);
+
+            if ($filter) {
+                $conditions = explode(' and ', $filter);
+                foreach ($conditions as $condition) {
+                    $parts = explode('~', $condition);
+                    $field = array_shift($parts);
+                    $values = $parts;
+                    if (count($values) > 0) {
+                        // Lọc theo category.name
+                        if ($field === 'category.name') {
+                            $query->whereHas('categories', function ($q) use ($values) {
+                                $q->where(function ($sub) use ($values) {
+                                    foreach ($values as $value) {
+                                        $sub->orWhere('categories.name', 'like', '%' . trim($value, "' ") . '%');
+                                    }
+                                });
+                            });
+                        }
+                        // Lọc theo mainText (title)
+                        elseif ($field === 'mainText' || $field === 'title' || $field === 'name') {
+                            $query->where(function ($q) use ($values) {
+                                foreach ($values as $value) {
+                                    $q->orWhere('title', 'like', '%' . trim($value, "' ") . '%');
+                                }
+                            });
+                        } else {
+                            $query->where(function ($q) use ($field, $values) {
+                                foreach ($values as $value) {
+                                    $q->orWhere($field, 'like', '%' . trim($value, "' ") . '%');
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+            // Xử lý sort: hỗ trợ updatedAt,desc | price | price,desc | sold,desc
+            if ($sort) {
+                $sortParts = explode(',', $sort);
+                $sortField = $sortParts[0] ?? 'updatedAt';
+                $sortDir = strtolower($sortParts[1] ?? '');
+
+                // Map field FE sang DB
+                $fieldMap = [
+                    'sold' => 'sold',
+                    'price' => 'price',
+                    'updatedAt' => 'updated_at',
+                    'created_at' => 'created_at',
+                    'title' => 'title',
+                ];
+                $allowedDirs = ['asc', 'desc'];
+                $dbField = $fieldMap[$sortField] ?? 'updated_at';
+
+                // Nếu chỉ truyền price thì mặc định asc
+                if ($sortField === 'price' && $sortDir === '') {
+                    $query->orderBy('price', 'asc');
+                } else {
+                    $dir = in_array($sortDir, $allowedDirs) ? $sortDir : 'desc';
+                    $query->orderBy($dbField, $dir);
+                }
+            } else {
+                $query->orderByDesc('updated_at');
+            }
+
+            $books = $query->paginate($pageSize, ['*'], 'page', $page);
+
+            return response()->json([
+                'status' => 0,
+                'message' => 'Lấy danh sách sách thành công',
+                'data' => new BookListResource($books)
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 1,
+                'message' => 'Lỗi khi lấy danh sách sách: ' . $e->getMessage(),
+            ], 500);
+        }
     }
+
 
     public function show(Book $book)
     {
