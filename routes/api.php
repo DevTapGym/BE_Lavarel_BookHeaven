@@ -24,6 +24,7 @@ use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UploadController;
+use App\Http\Controllers\PromotionController;
 
 
 // ---------------------
@@ -58,6 +59,11 @@ Route::prefix('/v1')->group(function () {
     Route::prefix('/categories')->group(function () {
         Route::get('/', [CategoryController::class, 'index']);
         Route::get('/page', [CategoryController::class, 'indexPaginated']);
+    });
+
+    Route::prefix('/promotions')->group(function () {
+        Route::get('/', [PromotionController::class, 'indexPaginated']);
+        Route::get('/{promotion}', [PromotionController::class, 'show']);
     });
 });
 
@@ -215,6 +221,12 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::post('/', [PermissionController::class, 'store'])->name('create.permission');
         Route::put('/', [PermissionController::class, 'update'])->name('update.permission');
         Route::delete('/{permission}', [PermissionController::class, 'destroy'])->name('delete.permission');
+    });
+
+    Route::prefix('/promotions')->group(function () {
+        Route::post('/', [PromotionController::class, 'store'])->name('create.promotion');
+        Route::put('/{promotion}', [PromotionController::class, 'update'])->name('update.promotion');
+        Route::delete('/{promotion}', [PromotionController::class, 'destroy'])->name('delete.promotion');
     });
 
     Route::prefix('/account')->group(function () {

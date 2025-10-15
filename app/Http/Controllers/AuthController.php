@@ -129,6 +129,7 @@ class AuthController extends Controller
         $user = Auth::user();
 
         $user->load('customer');
+        $role = $user->roles()->pluck('name')->first() ?? 'user';
 
         return $this->successResponse(
             200,
