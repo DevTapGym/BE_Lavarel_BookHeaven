@@ -69,6 +69,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
     Route::prefix('/auth')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
         Route::get('/me', [AuthController::class, 'me'])->name('get.info');
+        Route::get('/account', [AuthController::class, 'account'])->name('get.account');
         Route::put('/edit-profile', [AuthController::class, 'updateProfile'])->name('edit.profile');
         Route::put('/change-password', [AuthController::class, 'changePassword'])->name('change.password');
     });
@@ -206,10 +207,11 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::delete('/{role}', [RoleController::class, 'destroy'])->name('delete.role');
     });
 
-    Route::prefix('/permission')->group(function () {
+    Route::prefix('/permissions')->group(function () {
         Route::get('/', [PermissionController::class, 'indexPaginated'])->name('view.permissions');
-        Route::get('/id/{id}', [PermissionController::class, 'showById'])->name('show.permission.by.id');
-        Route::get('/name', [PermissionController::class, 'showByName'])->name('show.permission.by.name');
+        Route::get('/permissions-no-pagination', [PermissionController::class, 'index'])->name('view.permissions.no.pagination');
+        Route::get('/permissions-name', [PermissionController::class, 'showByName'])->name('show.permission.by.name');
+        Route::get('/{id}', [PermissionController::class, 'showById'])->name('show.permission.by.id');
         Route::post('/', [PermissionController::class, 'store'])->name('create.permission');
         Route::put('/', [PermissionController::class, 'update'])->name('update.permission');
         Route::delete('/{permission}', [PermissionController::class, 'destroy'])->name('delete.permission');
@@ -227,8 +229,11 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
     Route::prefix('/dashboard')->group(function () {
         Route::get('/stats', [DashboardController::class, 'getStats'])->name('view.dashboard.stats');
         Route::get('/count', [DashboardController::class, 'getBasicCounts'])->name('view.dashboard.counts');
-        Route::get('/monthly-revenue', [DashboardController::class, 'getMonthlyRevenue'])->name('view.dashboard.monthly.revenue');
         Route::get('/top-category', [DashboardController::class, 'getTopCategoriesByYear'])->name('view.dashboard.top.categories');
         Route::get('/top-book', [DashboardController::class, 'getTopBooksByYear'])->name('view.dashboard.top.books');
+        Route::get('/monthly-revenue', [DashboardController::class, 'getMonthlyRevenue'])->name('view.dashboard.monthly.revenue');
+        Route::get('/view9', [DashboardController::class, 'view9'])->name('view.dashboard.9');
+        Route::get('/view6', [DashboardController::class, 'view6'])->name('view.dashboard.6');
+        Route::get('/view1', [DashboardController::class, 'view1'])->name('view.dashboard.1');
     });
 });

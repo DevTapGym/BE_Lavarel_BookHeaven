@@ -17,6 +17,14 @@ class PermissionSeeder extends Seeder
             ['name' => 'get info', 'guard_name' => 'api', 'apiPath' => '/v1/auth/me', 'method' => 'GET', 'module' => 'Auth'],
             ['name' => 'edit profile', 'guard_name' => 'api', 'apiPath' => '/v1/auth/edit-profile', 'method' => 'PUT', 'module' => 'Auth'],
             ['name' => 'change password', 'guard_name' => 'api', 'apiPath' => '/v1/auth/change-password', 'method' => 'PUT', 'module' => 'Auth'],
+            ['name' => 'get account', 'guard_name' => 'api', 'apiPath' => '/v1/auth/account', 'method' => 'GET', 'module' => 'Auth'],
+
+            ['name' => 'login', 'guard_name' => 'api', 'apiPath' => '/v1/auth/login', 'method' => 'POST', 'module' => 'Auth'],
+            ['name' => 'register', 'guard_name' => 'api', 'apiPath' => '/v1/auth/register', 'method' => 'POST', 'module' => 'Auth'],
+            ['name' => 'refresh token', 'guard_name' => 'api', 'apiPath' => '/v1/auth/refresh', 'method' => 'POST', 'module' => 'Auth'],
+            ['name' => 'forgot password', 'guard_name' => 'api', 'apiPath' => '/v1/auth/forgot-password', 'method' => 'POST', 'module' => 'Auth'],
+            ['name' => 'reset password', 'guard_name' => 'api',  'apiPath'  =>  '/v1/auth/reset-password',  'method'  =>  'POST',  'module'  =>  'Auth'],
+
 
             ['name' => 'upload avatar', 'guard_name' => 'api', 'apiPath' => '/v1/upload/avatar', 'method' => 'POST', 'module' => 'Upload'],
             ['name' => 'upload book image', 'guard_name' => 'api', 'apiPath' => '/v1/upload/book-image', 'method' => 'POST', 'module' => 'Upload'],
@@ -120,12 +128,13 @@ class PermissionSeeder extends Seeder
             ['name' => 'update role', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'PUT', 'module' => 'Role'],
             ['name' => 'delete role', 'guard_name' => 'api', 'apiPath' => '/v1/role/{role}', 'method' => 'DELETE', 'module' => 'Role'],
 
-            ['name' =>  'view permissions',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission',  'method'  =>  'GET',  'module'  =>  'Permission'],
-            ['name' =>  'show permission by id',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission/id',  'method'  =>  'GET',  'module'  =>  'Permission'],
-            ['name' =>  'show permission by name',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission/name',  'method'  =>  'GET',  'module'  =>  'Permission'],
-            ['name' =>  'create permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission',  'method'  =>  'POST',  'module'  =>  'Permission'],
-            ['name' =>  'update permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission',  'method'  =>  'PUT',  'module'  =>  'Permission'],
-            ['name' =>  'delete permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permission/{permission}',  'method'  =>  'DELETE',  'module'  =>  'Permission'],
+            ['name' =>  'view permissions',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'view permissions no pagination',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions/permissions-no-pagination',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'show permission by id',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions/id',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'show permission by name',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions//permissions-name',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'create permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions',  'method'  =>  'POST',  'module'  =>  'Permission'],
+            ['name' =>  'update permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions',  'method'  =>  'PUT',  'module'  =>  'Permission'],
+            ['name' =>  'delete permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions/{permission}',  'method'  =>  'DELETE',  'module'  =>  'Permission'],
 
             ['name' => 'view accounts', 'guard_name' => 'api', 'apiPath' => '/v1/account', 'method' => 'GET', 'module' => 'Account'],
             ['name' => 'show account', 'guard_name' => 'api', 'apiPath' => '/v1/account/{user}', 'method' => 'GET', 'module' => 'Account'],
@@ -139,6 +148,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'view dashboard monthly revenue', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/monthly-revenue', 'method' => 'GET', 'module' => 'Dashboard'],
             ['name' => 'view dashboard top categories', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/top-category', 'method' => 'GET', 'module' => 'Dashboard'],
             ['name' => 'view dashboard top books', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/top-book', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard 9', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/view9', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard 6', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/view6', 'method' => 'GET', 'module' => 'Dashboard'],
+            ['name' => 'view dashboard 1', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/view1', 'method' => 'GET', 'module' => 'Dashboard'],
+
         ];
 
         $added = false;
