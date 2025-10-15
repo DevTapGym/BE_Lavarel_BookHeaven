@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Category;
 use App\Http\Resources\BookListResource;
+use App\Http\Resources\BookDetailResource;
 use Throwable;
 use Exception;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -99,6 +100,29 @@ class BookController extends Controller
             $book
         );
     }
+
+    public function showForWeb(Book $book)
+    {
+        try {
+            // Load relationships: categories với books và bookImages của từng book
+            $book->load([
+                'categories.books.bookImages',
+                'bookImages'
+            ]);
+
+            return response()->json([
+                'status' => 200,
+                'message' => 'Lấy thông tin sách thành công',
+                'data' => new BookDetailResource($book)
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 500,
+                'message' => 'Lỗi khi lấy thông tin sách: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
 
     public function search($search)
     {

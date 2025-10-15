@@ -52,6 +52,7 @@ Route::prefix('/v1')->group(function () {
         Route::get('/banner', [BookController::class, 'getBookBanner']);
         Route::get('/top-selling', [BookController::class, 'getTop3BestSellingBooksByYear']);
         Route::get('/{book}', [BookController::class, 'show']);
+        Route::get('/web/{book}', [BookController::class, 'showForWeb']);
         Route::get('/category/{category_id}', [BookController::class, 'getBooksByCategory']);
         Route::get('/feature/{book_id}', [BookFeatureController::class, 'index'])->name('view.book.features');
         Route::get('/images/{book_id}', [BookImageController::class, 'getBookImages'])->name('view.book.images');
