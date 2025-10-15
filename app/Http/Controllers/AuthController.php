@@ -349,19 +349,19 @@ class AuthController extends Controller
         $refreshToken = $request->cookie('refresh_token');
 
         if (!$refreshToken) {
-            return $this->errorResponse(401, 'Unauthorized', 'Refresh token not found');
+            return $this->errorResponse(400, 'Unauthorized', 'Refresh token not found');
         }
 
         try {
             $payload = JWTAuth::getJWTProvider()->decode($refreshToken);
 
             if (!isset($payload['type']) || $payload['type'] !== 'refresh') {
-                return $this->errorResponse(401, 'Unauthorized', 'Invalid refresh token type');
+                return $this->errorResponse(400, 'Unauthorized', 'Invalid refresh token type');
             }
 
             $user = User::find($payload['sub']);
             if (!$user) {
-                return $this->errorResponse(401, 'Unauthorized', 'User not found');
+                return $this->errorResponse(400, 'Unauthorized', 'User not found');
             }
 
             $role = $user->roles()->pluck('name')->first() ?? 'user';
@@ -400,13 +400,13 @@ class AuthController extends Controller
                 'refresh_token',
                 $newRefreshToken,
                 60 * 24 * 14,
-                null,
-                null,
+                '/',
+                'localhost',
                 true,
                 true
             );
         } catch (Exception $e) {
-            return $this->errorResponse(401, 'Unauthorized', 'Invalid or expired refresh token');
+            return $this->errorResponse(400, 'Unauthorized', 'Invalid or expired refresh token');
         }
     }
 
