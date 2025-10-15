@@ -126,6 +126,39 @@ class CartController extends Controller
         }
     }
 
+    public function toggleIsSelect(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'cart_item_id' => 'required|exists:cart_items,id',
+                'is_selected' => 'required|boolean',
+            ]);
+
+            $cartItem = CartItem::findOrFail($validated['cart_item_id']);
+            $cartItem->is_selected = $validated['is_selected'];
+            $cartItem->save();
+
+            return $this->successResponse(
+                200,
+                'Cart item selection updated successfully',
+                $cartItem
+            );
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse(
+                404,
+                'Not Found',
+                'Cart item not found'
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error updating cart item selection',
+                $th->getMessage()
+            );
+        }
+    }
+
+
     public function addItemCart(Request $request)
     {
         try {

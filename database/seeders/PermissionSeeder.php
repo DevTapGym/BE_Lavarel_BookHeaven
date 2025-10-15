@@ -48,6 +48,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'create cart', 'guard_name' => 'api', 'apiPath' => '/v1/cart', 'method' => 'POST', 'module' => 'Cart'],
             ['name' => 'add cart item', 'guard_name' => 'api', 'apiPath' => '/v1/cart/add-item', 'method' => 'POST', 'module' => 'Cart'],
             ['name' => 'update cart item', 'guard_name' => 'api', 'apiPath' => '/v1/cart/update-item/{cart_item_id}', 'method' => 'PUT', 'module' => 'Cart'],
+            ['name' => 'toggle cart item is select', 'guard_name' => 'api', 'apiPath' => '/v1/cart/item/toggle-is-select', 'method' => 'PUT', 'module' => 'Cart'],
             ['name' => 'remove cart item', 'guard_name' => 'api', 'apiPath' => '/v1/cart/remove-item/{cart_item_id}', 'method' => 'DELETE', 'module' => 'Cart'],
 
             ['name' => 'create book', 'guard_name' => 'api', 'apiPath' => '/v1/book', 'method' => 'POST', 'module' => 'Book'],
