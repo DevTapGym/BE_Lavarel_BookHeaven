@@ -35,7 +35,7 @@ Route::prefix('/v1')->group(function () {
     Route::prefix('/auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/register', [AuthController::class, 'register']);
-        Route::post('/refresh', [AuthController::class, 'refreshToken']);
+        Route::get('/refresh', [AuthController::class, 'refreshToken']);
         Route::post('/send-code', [ActivationController::class, 'sendActivationCode']);
         Route::post('/verify-code', [ActivationController::class, 'verifyActivationCode']);
         Route::post('/forgot-password', [ActivationController::class, 'forgotPassword']);
@@ -107,6 +107,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
     Route::prefix('/cart')->group(function () {
         Route::get('/my-cart', [CartController::class, 'getMyCart'])->name('view.my.cart');
         Route::get('/{customer_id}', [CartController::class, 'getCartItemsByCustomer'])->name('view.cart.items');
+        Route::put('/item/toggle-is-select', [CartController::class, 'toggleIsSelect'])->name('toggle.cart.item.is.select');
         Route::post('/', [CartController::class, 'store'])->name('create.cart');
         Route::post('/add', [CartController::class, 'addItemCart'])->name('add.cart.item');
         Route::put('/update/{cart_item_id}', [CartController::class, 'updateCartItem'])->name('update.cart.item');
