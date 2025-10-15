@@ -120,9 +120,11 @@ class PermissionSeeder extends Seeder
 
             ['name' => 'view orders', 'guard_name' => 'api', 'apiPath' => '/v1/order', 'method' => 'GET', 'module' => 'Order'],
             ['name' => 'view user orders', 'guard_name' => 'api', 'apiPath' => '/v1/order/user', 'method' => 'GET', 'module' => 'Order'],
+            ['name' => 'view orders history', 'guard_name' => 'api', 'apiPath' => '/v1/order/history', 'method' => 'GET', 'module' => 'Order'],
             ['name' => 'show order', 'guard_name' => 'api', 'apiPath' => '/v1/order/{order}', 'method' => 'GET', 'module' => 'Order'],
             ['name' => 'create order', 'guard_name' => 'api', 'apiPath' => '/v1/order/create', 'method' => 'POST', 'module' => 'Order'],
             ['name' => 'place order', 'guard_name' => 'api', 'apiPath' => '/v1/order/place', 'method' => 'POST', 'module' => 'Order'],
+            ['name' => 'place order for web', 'guard_name' => 'api', 'apiPath' => '/v1/order/place/web', 'method' => 'POST', 'module' => 'Order'],
 
             ['name' => 'view roles', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'GET', 'module' => 'Role'],
             ['name' => 'show role', 'guard_name' => 'api', 'apiPath' => '/v1/role/{role}', 'method' => 'GET', 'module' => 'Role'],
