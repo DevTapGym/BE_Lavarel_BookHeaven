@@ -13,7 +13,6 @@ use App\Http\Resources\BookListResource;
 use Throwable;
 use Exception;
 
-
 class BookController extends Controller
 {
 
@@ -43,6 +42,26 @@ class BookController extends Controller
             if ($filter) {
                 $conditions = explode(' and ', $filter);
                 foreach ($conditions as $condition) {
+                    // Xử lý lọc theo khoảng giá: price>:50000 hoặc price<:110000
+                    if (preg_match('/^price([><=]+):(\d+)$/', trim($condition), $matches)) {
+                        $operator = $matches[1];
+                        $value = (float) $matches[2];
+
+                        if ($operator === '>') {
+                            $query->where('price', '>', $value);
+                        } elseif ($operator === '<') {
+                            $query->where('price', '<', $value);
+                        } elseif ($operator === '>=') {
+                            $query->where('price', '>=', $value);
+                        } elseif ($operator === '<=') {
+                            $query->where('price', '<=', $value);
+                        } elseif ($operator === '=') {
+                            $query->where('price', '=', $value);
+                        }
+                        continue;
+                    }
+
+                    // Logic cũ: Lọc theo field~value
                     $parts = explode('~', $condition);
                     $field = array_shift($parts);
                     $values = $parts;
