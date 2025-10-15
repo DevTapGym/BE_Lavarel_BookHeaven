@@ -111,6 +111,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::put('/item/toggle-is-select', [CartController::class, 'toggleIsSelect'])->name('toggle.cart.item.is.select');
         Route::post('/', [CartController::class, 'store'])->name('create.cart');
         Route::post('/add', [CartController::class, 'addItemCart'])->name('add.cart.item');
+        Route::post('/web/add', [CartController::class, 'addItemCartForWeb'])->name('add.cart.item.for.web');
         Route::put('/update/{cart_item_id}', [CartController::class, 'updateCartItem'])->name('update.cart.item');
         Route::delete('/remove/{cart_item_id}', [CartController::class, 'removeItemCart'])->name('remove.cart.item');
     });
