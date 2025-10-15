@@ -12,12 +12,14 @@ class OrderStatusSeeder extends Seeder
     {
         // Add default order statuses
         $statuses = [
-            ['name' => 'Pending', 'description' => 'Order has been placed but not yet processed', 'sequence' => 1],
-            ['name' => 'Processing', 'description' => 'Order is being processed', 'sequence' => 2],
-            ['name' => 'Shipped', 'description' => 'Order has been shipped', 'sequence' => 3],
-            ['name' => 'Delivered', 'description' => 'Order has been delivered to the customer', 'sequence' => 4],
-            ['name' => 'Cancelled', 'description' => 'Order has been cancelled', 'sequence' => 5],
-            ['name' => 'Returned', 'description' => 'Order has been returned by the customer', 'sequence' => 6],
+            ['name' => 'wait_confirm', 'description' => 'Chờ xác nhận', 'sequence' => 1],
+            ['name' => 'processing', 'description' => 'Đang xử lý', 'sequence' => 2],
+            ['name' => 'shipping', 'description' => 'Đang giao hàng', 'sequence' => 3],
+            ['name' => 'payment_completed', 'description' => 'Đã thanh toán', 'sequence' => 4],
+            ['name' => 'canceled', 'description' => 'Đã hủy', 'sequence' => 5],
+            ['name' => 'returned', 'description' => 'Đã hoàn trả', 'sequence' => 6],
+            ['name' => 'completed', 'description' => 'Đã hoàn thành', 'sequence' => 7],
+
         ];
 
         foreach ($statuses as $status) {

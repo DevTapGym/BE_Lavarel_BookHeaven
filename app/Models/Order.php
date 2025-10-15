@@ -12,19 +12,15 @@ class Order extends Model
         'note',
         'shipping_fee',
 
-        'shipping_address_id',
-        'payment_method_id',
+        'payment_method',
+
+        'promotion_id',
+        'total_promotion_value',
+
+        'customer_id',
     ];
 
-    public function paymentMethod()
-    {
-        return $this->belongsTo(PaymentMethod::class);
-    }
-
-    public function shippingAddress()
-    {
-        return $this->belongsTo(ShippingAddress::class);
-    }
+    // Removed relations to paymentMethod and shippingAddress as per new requirement
 
     public function orderItems()
     {

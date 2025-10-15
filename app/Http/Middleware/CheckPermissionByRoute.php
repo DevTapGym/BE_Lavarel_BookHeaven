@@ -17,7 +17,7 @@ class CheckPermissionByRoute
         $routeName = $request->route()->getName();
         $permissionName = str_replace('.', ' ', $routeName);
         $role = $user->roles()->pluck('name')->first();
-        if ($role === 'ADMIN') {
+        if ($role === 'admin') {
             return $next($request);
         }
 

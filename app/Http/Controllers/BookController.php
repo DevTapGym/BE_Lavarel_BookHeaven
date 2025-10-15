@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Category;
 use App\Http\Resources\BookListResource;
 use App\Http\Resources\BookDetailResource;
+use App\Http\Resources\BookItemResource;
 use Throwable;
 use Exception;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -87,6 +88,16 @@ class BookController extends Controller
                 'message' => 'Lỗi khi lấy danh sách sách: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    public function getAllBooks()
+    {
+        $books = Book::where('is_active', true)->get();
+        return response()->json([
+            'status' => 200,
+            'message' => 'Lấy danh sách sách thành công',
+            'data' => BookItemResource::collection($books)
+        ]);
     }
 
 
