@@ -96,7 +96,7 @@ class DashBoardController extends Controller
 
             $topBooks = Book::select(
                 'id as bookID',
-                'name as bookName',
+                'title as bookName',
                 'sold as totalQuantity'
             )
                 ->orderByDesc('sold')

@@ -248,6 +248,6 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::get('/view9', [DashboardController::class, 'view9'])->name('view.dashboard.9');
         Route::get('/view6', [DashboardController::class, 'view6'])->name('view.dashboard.6');
         Route::get('/view1', [DashboardController::class, 'view1'])->name('view.dashboard.1');
-        Route::get('/get-top5-books-sold', [DashboardController::class, 'view1'])->name('view.dashboard.top.5.books.sold');
+        Route::get('/get-top5-books-sold', [DashboardController::class, 'getTop5BookSold'])->name('view.dashboard.top.5.books.sold');
     });
 });
