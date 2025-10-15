@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\User;
 use Exception;
 
 use Throwable;
@@ -215,6 +216,98 @@ class CartController extends Controller
             );
         } catch (Throwable $th) {
             return $this->errorResponse(500, 'Error adding item to cart', $th->getMessage());
+        }
+    }
+
+    public function addItemCartForWeb(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'email' => 'required|email',
+                'book_id' => 'required|exists:books,id',
+                'quantity' => 'required|integer|min:1',
+            ]);
+
+            // Tìm user theo email
+            $user = User::where('email', $validated['email'])->first();
+            if (!$user) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'User not found with this email',
+                ], 404);
+            }
+
+            // Lấy customer_id từ user
+            $customerId = $user->customer_id;
+            if (!$customerId) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Customer profile not found for this user',
+                ], 404);
+            }
+
+            // Tìm cart của customer, nếu chưa có thì tạo mới
+            $cart = Cart::where('customer_id', $customerId)->first();
+            if (!$cart) {
+                $cart = Cart::create([
+                    'customer_id' => $customerId,
+                    'total_price' => 0,
+                    'count' => 0,
+                ]);
+            }
+
+            $book = Book::find($validated['book_id']);
+            if (!$book) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => 'Book not found',
+                ], 404);
+            }
+
+            $cartItem = null;
+
+            DB::transaction(function () use ($validated, $book, $cart, &$cartItem) {
+                // Nếu đã có item giống (cùng book trong cùng cart) -> cộng dồn
+                $existing = CartItem::where('cart_id', $cart->id)
+                    ->where('book_id', $validated['book_id'])
+                    ->first();
+
+                if ($existing) {
+                    $newQuantity = $existing->quantity + $validated['quantity'];
+
+                    // Kiểm tra stock với số lượng tổng
+                    $this->validateBookStock($book, $newQuantity, 'add');
+
+                    $existing->quantity = $newQuantity;
+                    $existing->price = $book->price * $existing->quantity;
+                    $existing->save();
+                    $cartItem = $existing;
+                } else {
+                    // Kiểm tra stock cho item mới
+                    $this->validateBookStock($book, $validated['quantity'], 'add');
+
+                    $payload = [
+                        'cart_id' => $cart->id,
+                        'book_id' => $validated['book_id'],
+                        'quantity' => $validated['quantity'],
+                        'price' => $book->price * $validated['quantity'],
+                    ];
+                    $cartItem = CartItem::create($payload);
+                }
+
+                $this->updateCartTotals($cart->id);
+            });
+
+            return response()->json([
+                'status' => 0,
+                'message' => 'Item added to cart successfully',
+                'data' => $cartItem
+            ], 201);
+        } catch (Throwable $th) {
+            return response()->json([
+                'status' => 1,
+                'message' => 'Error adding item to cart: ' . $th->getMessage(),
+            ], 500);
         }
     }
 
