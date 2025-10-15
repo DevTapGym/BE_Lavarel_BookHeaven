@@ -197,7 +197,10 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::get('/user', [OrderController::class, 'getOrdersByUser'])->name('view.user.orders');
         Route::post('/create', [OrderController::class, 'createOrderFromWebPayload'])->name('create.order');
         Route::post('/create/web', [OrderController::class, 'createOrderFromWebPayload'])->name('create.order.for.web');
+        Route::get('/history/{userId}', [OrderController::class, 'getOrdersByUserForWeb'])->name('view.orders.history');
+        Route::post('/create', [OrderController::class, 'createOrder'])->name('create.order');
         Route::post('/place', [OrderController::class, 'placeOrder'])->name('place.order');
+        Route::post('/place/web', [OrderController::class, 'createOrderForWeb'])->name('place.order.for.web');
         Route::get('/{order}', [OrderController::class, 'show'])->name('show.order');
     });
 
