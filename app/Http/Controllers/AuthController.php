@@ -65,7 +65,8 @@ class AuthController extends Controller
         return $this->successResponse(
             200,
             'Login successful',
-            $this->formatAuthData($accessToken, $user, $refreshToken),
+            //$this->formatAuthData($accessToken, $user, $refreshToken),
+            ['account' => new AccountResource($user)]
         )->cookie(
             'refresh_token',
             $refreshToken,
