@@ -44,6 +44,7 @@ Route::prefix('/v1')->group(function () {
 
     Route::prefix('/book')->group(function () {
         Route::get('/', [BookController::class, 'indexPaginated']);
+        Route::get('/books', [BookController::class, 'indexPaginatedForWeb']);
         Route::get('/search/{search}', [BookController::class, 'search']);
         Route::get('/popular', [BookController::class, 'getPopularBooks']);
         Route::get('/random', [BookController::class, 'getRandomBooks']);

@@ -9,6 +9,7 @@ use App\Models\Supply;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Category;
+use App\Http\Resources\BookListResource;
 use Throwable;
 
 
@@ -26,6 +27,18 @@ class BookController extends Controller
             'Books retrieved successfully',
             $data
         );
+    }
+
+    public function indexPaginatedForWeb(Request $request)
+    {
+        $books = Book::with(['categories.books.bookImages', 'bookImages'])
+            ->paginate($request->input('pageSize', 10));
+
+        return response()->json([
+            'status' => 0,
+            'message' => 'Lấy danh sách sách thành công',
+            'data' => new BookListResource($books)
+        ]);
     }
 
     public function show(Book $book)
