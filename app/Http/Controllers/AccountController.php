@@ -8,27 +8,80 @@ use App\Http\Resources\UserAccountResource;
 use App\Http\Resources\UserAccountListResource;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
+use Throwable;
 
 class AccountController extends Controller
 {
     public function indexPaginated(Request $request)
     {
-        $pageSize = $request->query('size', 10);
+        try {
+            $pageSize = $request->query('size', 10);
 
-        $paginator = User::with(['roles', 'customer', 'employee'])
-            ->paginate($pageSize);
+            // Dùng QueryBuilder để build query động
+            $paginator = QueryBuilder::for(User::class)
+                ->with(['roles', 'customer', 'employee'])
+                ->allowedFilters([
+                    // Lọc theo cột trong bảng users
+                    AllowedFilter::partial('name'),
+                    AllowedFilter::partial('email'),
 
-        $paginator->setCollection(
-            collect(UserAccountListResource::collection($paginator->items()))
-        );
+                    // Lọc theo số điện thoại của customer hoặc employee
+                    AllowedFilter::callback('phone', function ($query, $value) {
+                        $query->whereHas('customer', function ($q) use ($value) {
+                            $q->where('phone', 'like', "%{$value}%");
+                        })->orWhereHas('employee', function ($q) use ($value) {
+                            $q->where('phone', 'like', "%{$value}%");
+                        });
+                    }),
 
-        $data = $this->paginateResponse($paginator);
+                    // Lọc theo tên vai trò (role name)
+                    AllowedFilter::callback('role', function ($query, $value) {
+                        $query->whereHas('roles', function ($q) use ($value) {
+                            $q->where('name', 'like', "%{$value}%");
+                        });
+                    }),
+                ])
+                ->allowedSorts([
+                    'id',
+                    'name',
+                    'email',
+                    'created_at',
+                    'updated_at',
 
-        return $this->successResponse(
-            200,
-            'Account retrieved successfully',
-            $data
-        );
+                    // Sắp theo số điện thoại (customer trước, employee sau)
+                    AllowedSort::custom('phone', new class implements \Spatie\QueryBuilder\Sorts\Sort {
+                        public function __invoke($query, $descending, string $property)
+                        {
+                            $direction = $descending ? 'desc' : 'asc';
+                            $query->leftJoin('customers', 'users.customer_id', '=', 'customers.id')
+                                ->orderBy('customers.phone', $direction);
+                        }
+                    }),
+                ])
+                ->paginate($pageSize)
+                ->appends(request()->query());
+
+            $paginator->setCollection(
+                collect(UserAccountListResource::collection($paginator->items()))
+            );
+
+            $data = $this->paginateResponse($paginator);
+
+            return $this->successResponse(
+                200,
+                'Accounts retrieved successfully',
+                $data
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error retrieving accounts',
+                $th->getMessage()
+            );
+        }
     }
 
     public function show(User $user)

@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use Illuminate\Http\Request;
 use Throwable;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
+
 
 class EmployeeController extends Controller
 {
@@ -19,12 +23,45 @@ class EmployeeController extends Controller
 
     public function indexPaginated(Request $request)
     {
-        $pageSize = $request->query('size', 10);
-        $paginator = Employee::paginate($pageSize);
+        try {
+            $pageSize = $request->query('size', 10);
 
-        $data = $this->paginateResponse($paginator);
+            $paginator = QueryBuilder::for(\App\Models\Employee::class)
+                ->allowedFilters([
+                    // Lọc gần đúng theo các trường chính
+                    AllowedFilter::partial('name'),
+                    AllowedFilter::partial('email'),
+                    AllowedFilter::partial('phone'),
+                ])
+                ->allowedSorts([
+                    'id',
+                    'name',
+                    'email',
+                    'phone',
+                    'address',
+                    'date_of_birth',
+                    'salary',
+                    'hire_date',
+                    'created_at',
+                    'updated_at',
+                ])
+                ->paginate($pageSize)
+                ->appends($request->query());
 
-        return $this->successResponse(200, 'Customers retrieved successfully', $data);
+            $data = $this->paginateResponse($paginator);
+
+            return $this->successResponse(
+                200,
+                'Employees retrieved successfully',
+                $data
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error retrieving employees',
+                $th->getMessage()
+            );
+        }
     }
 
     public function store(Request $request)
