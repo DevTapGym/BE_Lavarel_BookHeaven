@@ -24,12 +24,8 @@ class OrderWebRequest extends FormRequest
         return [
             'receiverName'    => 'required|string|max:255',
             'customerId'      => 'required|exists:customers,id',
-
-            'customerId'   => 'required|string|max:100',
             'promotionId'     => 'nullable|exists:promotions,id',
-            'paymentMethod' => 'required|in:cod,online',
-
-            'promotionId'               => 'required|array|min:1',
+            'paymentMethod' => 'required|in:cash,bank',
             'orderItems.*.bookId'      => 'required|exists:books,id',
             'orderItems.*.quantity'    => 'required|integer|min:1',
         ];

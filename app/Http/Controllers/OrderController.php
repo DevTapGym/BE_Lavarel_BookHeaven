@@ -22,6 +22,7 @@ use App\Models\Promotion;
 use App\Models\ShippingAddress;
 use App\Http\Resources\OrderForWebResource;
 use App\Http\Resources\OrderListForWebResource;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
 use Exception;
 
@@ -647,5 +648,61 @@ class OrderController extends Controller
             $cart->count = $cart->cartItems->count();
             $cart->save();
         }
+    }
+
+    public function printOrderView($id)
+    {
+        $order = Order::find($id);
+        if (!$order) {
+            return $this->errorResponse(404, 'Not Found', 'Order not found');
+        }
+        return view('orders.print', [
+            'order' => $order,
+        ]);
+    }
+
+    public function downloadOrderPdf($id)
+    {
+        $order = Order::with(['orderItems.book'])->find($id);
+        if (!$order) {
+            return $this->errorResponse(404, 'Not Found', 'Order not found');
+        }
+
+        // Generate VietQR image (data URL)
+        $finalTotal = (int) (($order->total_amount ?? 0));
+
+        $qrImg = null;
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->post('https://api.vietqr.io/v2/generate', [
+                'accountNo' => '1031418856',
+                'accountName' => 'DANG NGOC TAI',
+                'acqId' => '970436',
+                'addInfo' => 'Thanh toán đơn hàng ' . ($order->order_number ?? ''),
+                'amount' => max(0, $finalTotal),
+                'template' => 'compact',
+            ]);
+
+            if ($response->ok()) {
+                $qrImg = data_get($response->json(), 'data.qrDataURL');
+            }
+        } catch (\Throwable $e) {
+            // swallow QR errors; continue rendering without QR
+        }
+
+        $html = view('orders.print_pdf', [ 'order' => $order, 'qrImg' => $qrImg ])->render();
+
+        $options = new \Dompdf\Options();
+        $options->set('defaultFont', 'DejaVu Sans');
+        $options->set('isRemoteEnabled', true);
+        $dompdf = new \Dompdf\Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper([0, 0, 226.77, 2000]);
+        $dompdf->render();
+
+        return response($dompdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="order_'.$id.'.pdf"');
     }
 }

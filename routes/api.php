@@ -195,6 +195,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
 
     Route::prefix('/order')->group(function () {
         Route::get('/', [OrderController::class, 'indexPaginated'])->name('view.orders');
+        Route::get('/downloadPdf/{id}', [OrderController::class, 'downloadOrderPdf'])->name('download.order.pdf');
         Route::get('/user', [OrderController::class, 'getOrdersByUser'])->name('view.user.orders');
         Route::post('/create', [OrderController::class, 'createOrderFromWebPayload'])->name('create.order');
         Route::post('/create/web', [OrderController::class, 'createOrderFromWebPayload'])->name('create.order.for.web');
