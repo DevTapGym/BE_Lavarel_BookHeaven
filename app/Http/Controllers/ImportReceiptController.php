@@ -8,14 +8,21 @@ use App\Http\Requests\ImportReceiptRequest;
 use Illuminate\Support\Facades\DB;
 use App\Models\ImportReceiptDetail;
 use App\Models\Supply;
+use App\Models\Employee;
 use App\Http\Resources\ImportReceiptResource;
+use Carbon\Carbon;
 
 class ImportReceiptController extends Controller
 {
     public function indexPaginated(Request $request)
     {
         $pageSize = $request->query('size', 10);
-        $paginator = ImportReceipt::paginate($pageSize);
+        $paginator = ImportReceipt::with(['employee', 'importReceiptDetails.supply.book'])
+            ->paginate($pageSize);
+
+        $paginator->setCollection(
+            collect(ImportReceiptResource::collection($paginator->items()))
+        );
         $data = $this->paginateResponse($paginator);
 
         return $this->successResponse(
@@ -37,30 +44,73 @@ class ImportReceiptController extends Controller
         );
     }
 
+    /**
+     * Tạo mã phiếu nhập theo cấu trúc: RN + ngày(2 số) + tháng(2 số) + năm(2 số cuối) + số thứ tự trong ngày(3 số)
+     * Ví dụ: RN161025001 (16/10/2025, phiếu thứ 1 trong ngày)
+     */
+    private function generateReceiptNumber()
+    {
+        // RN + Ngày hiện tại
+        $today = Carbon::now();
+        $datePrefix = 'RN' . $today->format('dmy');
+
+        // Đếm số phiếu nhập đã tạo trong ngày hôm nay
+        $todayStart = $today->startOfDay();
+        $todayEnd = $today->copy()->endOfDay();
+        $count = ImportReceipt::whereBetween('created_at', [$todayStart, $todayEnd])->count();
+
+        // Số thứ tự (3 chữ số)
+        $sequenceNumber = str_pad($count + 1, 3, '0', STR_PAD_LEFT);
+
+        return $datePrefix . $sequenceNumber;
+    }
+
     public function store(ImportReceiptRequest $request)
     {
         return DB::transaction(function () use ($request) {
-            $totalAmount = collect($request->details)->sum('price');
+            // Tìm employee_id bằng email
+            $employee = Employee::where('email', $request->employeeEmail)->firstOrFail();
 
+            // Tạo receipt_number tự động
+            $receiptNumber = $this->generateReceiptNumber();
+
+            // Tính tổng tiền từ details
+            $totalAmount = 0;
+            foreach ($request->importReceiptItems as $detail) {
+                // Tìm supply dựa trên book_id và supplier_id
+                $supply = Supply::where('book_id', $detail['bookId'])
+                    ->where('supplier_id', $detail['supplierId'])
+                    ->firstOrFail();
+
+                $totalAmount += $supply->supply_price * $detail['quantity'];
+            }
+
+            // Tạo phiếu nhập
             $importReceipt = ImportReceipt::create([
-                'receipt_number' => $request->receipt_number,
+                'receipt_number' => $receiptNumber,
                 'notes' => $request->notes,
-                'employee_id' => $request->employee_id,
+                'employee_id' => $employee->id,
                 'total_amount' => $totalAmount,
+                'created_by' => $request->employeeEmail,
             ]);
 
-            foreach ($request->details as $detail) {
-                $supply = Supply::findOrFail($detail['supply_id']);
+            // Tạo chi tiết phiếu nhập và cập nhật số lượng sách
+            foreach ($request->importReceiptItems as $detail) {
+                // Tìm supply dựa trên book_id và supplier_id
+                $supply = Supply::where('book_id', $detail['bookId'])
+                    ->where('supplier_id', $detail['supplierId'])
+                    ->firstOrFail();
+
                 $price = $supply->supply_price;
 
                 ImportReceiptDetail::create([
                     'import_receipt_id' => $importReceipt->id,
-                    'supply_id' => $detail['supply_id'],
+                    'supply_id' => $supply->id,
                     'quantity' => $detail['quantity'],
                     'price' => $price,
                 ]);
 
-                // cập nhật số lượng sách
+                // Cập nhật số lượng sách
                 $book = $supply->book;
                 $book->increment('quantity', $detail['quantity']);
             }
@@ -75,57 +125,57 @@ class ImportReceiptController extends Controller
         });
     }
 
-    public function update(ImportReceiptRequest $request)
-    {
-        return DB::transaction(function () use ($request) {
-            $importReceipt = ImportReceipt::findOrFail($request->id);
+    // public function update(ImportReceiptRequest $request)
+    // {
+    //     return DB::transaction(function () use ($request) {
+    //         $importReceipt = ImportReceipt::findOrFail($request->id);
 
-            $totalAmount = collect($request->details)->sum('total_price');
+    //         $totalAmount = collect($request->details)->sum('total_price');
 
-            $importReceipt->update([
-                'receipt_number' => $request->receipt_number,
-                'notes' => $request->notes,
-                'employee_id' => $request->employee_id,
-                'total_amount' => $totalAmount,
-            ]);
+    //         $importReceipt->update([
+    //             'receipt_number' => $request->receipt_number,
+    //             'notes' => $request->notes,
+    //             //'employee_id' => $request->employee_id,
+    //             'total_amount' => $totalAmount,
+    //         ]);
 
-            // Lấy chi tiết cũ để rollback số lượng sách
-            $oldDetails = ImportReceiptDetail::where('import_receipt_id', $importReceipt->id)->get();
+    //         // Lấy chi tiết cũ để rollback số lượng sách
+    //         $oldDetails = ImportReceiptDetail::where('import_receipt_id', $importReceipt->id)->get();
 
-            foreach ($oldDetails as $oldDetail) {
-                $supply = Supply::find($oldDetail->supply_id);
-                if ($supply && $supply->book) {
-                    $supply->book->decrement('quantity', $oldDetail->quantity);
-                }
-            }
+    //         foreach ($oldDetails as $oldDetail) {
+    //             $supply = Supply::find($oldDetail->supply_id);
+    //             if ($supply && $supply->book) {
+    //                 $supply->book->decrement('quantity', $oldDetail->quantity);
+    //             }
+    //         }
 
-            // Xóa chi tiết cũ
-            ImportReceiptDetail::where('import_receipt_id', $importReceipt->id)->delete();
+    //         // Xóa chi tiết cũ
+    //         ImportReceiptDetail::where('import_receipt_id', $importReceipt->id)->delete();
 
-            // Tạo lại chi tiết mới + cộng số lượng sách
-            foreach ($request->details as $detail) {
-                $supply = Supply::findOrFail($detail['supply_id']);
-                $price = $supply->supply_price;
+    //         // Tạo lại chi tiết mới + cộng số lượng sách
+    //         foreach ($request->details as $detail) {
+    //             $supply = Supply::findOrFail($detail['supply_id']);
+    //             $price = $supply->supply_price;
 
-                ImportReceiptDetail::create([
-                    'import_receipt_id' => $importReceipt->id,
-                    'supply_id' => $detail['supply_id'],
-                    'quantity' => $detail['quantity'],
-                    'price' => $price,
-                ]);
+    //             ImportReceiptDetail::create([
+    //                 'import_receipt_id' => $importReceipt->id,
+    //                 'supply_id' => $detail['supply_id'],
+    //                 'quantity' => $detail['quantity'],
+    //                 'price' => $price,
+    //             ]);
 
-                // cập nhật số lượng sách
-                $book = $supply->book;
-                $book->increment('quantity', $detail['quantity']);
-            }
+    //             // cập nhật số lượng sách
+    //             $book = $supply->book;
+    //             $book->increment('quantity', $detail['quantity']);
+    //         }
 
-            $importReceipt->load('importReceiptDetails');
+    //         $importReceipt->load('importReceiptDetails');
 
-            return $this->successResponse(
-                200,
-                'Import Receipt updated successfully',
-                $importReceipt
-            );
-        });
-    }
+    //         return $this->successResponse(
+    //             200,
+    //             'Import Receipt updated successfully',
+    //             $importReceipt
+    //         );
+    //     });
+    // }
 }

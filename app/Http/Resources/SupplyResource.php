@@ -16,9 +16,17 @@ class SupplyResource extends JsonResource
     {
         return [
             'id'          => $this->id,
-            'book'        => $this->whenLoaded('book'),     // eager load book
-            'supplier'    => $this->whenLoaded('supplier'), // eager load supplier
+            'book'        => [
+                'id'       => $this->book->id,
+                'mainText' => $this->book->title,
+            ],
+            'supplier'    => [
+                'id'   => $this->supplier->id,
+                'name' => $this->supplier->name,
+            ],
             'supplyPrice' => (float) $this->supply_price,
+            'createdAt'  => optional($this->created_at)?->toISOString(),
+            'updatedAt'  => optional($this->updated_at)?->toISOString(),
         ];
     }
 }

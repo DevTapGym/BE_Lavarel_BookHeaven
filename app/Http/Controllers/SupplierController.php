@@ -4,19 +4,42 @@ namespace App\Http\Controllers;
 
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 
 class SupplierController extends Controller
 {
     public function indexPaginated(Request $request)
     {
         $pageSize = $request->query('size', 10);
-        $paginator = Supplier::paginate($pageSize);
-        $data = $this->paginateResponse($paginator);
+
+        $suppliers = QueryBuilder::for(Supplier::class)
+            ->allowedFilters([
+                AllowedFilter::partial('name'),
+                AllowedFilter::partial('address'),
+                AllowedFilter::partial('email'),
+            ])
+            ->allowedSorts(['created_at', 'address', 'phone', 'name', 'email', 'updated_at'])
+            ->defaultSort('-created_at')
+            ->paginate($pageSize);
+
+        $data = $this->paginateResponse($suppliers);
 
         return $this->successResponse(
             200,
             'Supplier retrieved successfully',
             $data
+        );
+    }
+
+    public function index()
+    {
+        $suppliers = Supplier::all();
+
+        return $this->successResponse(
+            200,
+            'Supplier retrieved successfully',
+            $suppliers
         );
     }
 

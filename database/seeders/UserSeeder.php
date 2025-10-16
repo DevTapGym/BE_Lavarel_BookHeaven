@@ -24,7 +24,7 @@ class UserSeeder extends Seeder
         Cart::create(['customer_id' => $customer->id]);
 
         $employee = Employee::firstOrCreate(
-            ['email' => 'employee@gmail.com'],
+            ['email' => 'admin@gmail.com'],
             [
                 'name' => 'Default Employee',
                 'phone' => '0998887653',

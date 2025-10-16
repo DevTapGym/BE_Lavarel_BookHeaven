@@ -146,8 +146,9 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::delete('/{category}', [CategoryController::class, 'destroy'])->name('delete.category');
     });
 
-    Route::prefix('/supplier')->group(function () {
-        Route::get('/', [SupplierController::class, 'indexPaginated'])->name('view.suppliers');
+    Route::prefix('/suppliers')->group(function () {
+        Route::get('/pagination', [SupplierController::class, 'indexPaginated'])->name('view.suppliers');
+        Route::get('/', [SupplierController::class, 'index'])->name('view.suppliers.no.pagination');
         Route::get('/{supplier}', [SupplierController::class, 'show'])->name('show.supplier');
         Route::get('/{id}/books', [SupplierController::class, 'getBooksBySupplier'])->name('show.supplier.books');
         Route::get('/{id}/supplies', [SupplierController::class, 'getSuppliesBySupplier'])->name('show.supplier.supplies');
@@ -158,7 +159,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
 
     Route::prefix('/supply')->group(function () {
         Route::get('/', [SupplyController::class, 'indexPaginated'])->name('view.supplies');
-        Route::get('/fetch-supply', [SupplyController::class, 'getByBookAndSupplier'])->name('show.supply');
+        Route::post('/fetch-supply', [SupplyController::class, 'getByBookAndSupplier'])->name('show.supply');
         Route::post('/', [SupplyController::class, 'store'])->name('create.supply');
         Route::put('/', [SupplyController::class, 'update'])->name('update.supply');
         Route::delete('/{supply}', [SupplyController::class, 'destroy'])->name('delete.supply');
@@ -200,11 +201,10 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::get('/history/{userId}', [OrderController::class, 'getOrdersByUserForWeb'])->name('view.orders.history');
         Route::post('/create', [OrderController::class, 'createOrder'])->name('create.order');
         Route::post('/place', [OrderController::class, 'placeOrder'])->name('place.order');
-        Route::post('/place/web', [OrderController::class, 'createOrderForWeb'])->name('place.order.for.web');
+        Route::post('/place/web', [OrderController::class, 'placeOrderForWeb'])->name('place.order.for.web');
         Route::get('/{order}', [OrderController::class, 'show'])->name('show.order');
     });
 
-    
 
     Route::prefix('/shippingStatus')->group(function () {
         Route::get('/', [OrderStatusController::class, 'index'])->name('view.order.statuses');

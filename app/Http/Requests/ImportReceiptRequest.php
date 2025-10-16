@@ -9,8 +9,8 @@ use Illuminate\Validation\Rule;
  * @property int|null $id
  * @property string $receipt_number
  * @property string|null $notes
- * @property int $employee_id
- * @property array $details
+ * @property int $employeeEmail
+ * @property array $importReceiptItems
  */
 class ImportReceiptRequest extends FormRequest
 {
@@ -22,21 +22,12 @@ class ImportReceiptRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'id' => 'sometimes|integer|exists:import_receipts,id',
-
-            'receipt_number' => [
-                'required',
-                'string',
-                'max:50',
-                Rule::unique('import_receipts', 'receipt_number')->ignore($this->id),
-            ],
-
             'notes' => 'nullable|string',
-            'employee_id' => 'required|exists:employees,id',
-
-            'details' => 'required|array|min:1',
-            'details.*.supply_id' => 'required|exists:supplies,id',
-            'details.*.quantity' => 'required|integer|min:1',
+            'employeeEmail' => 'required|email|exists:employees,email',
+            'importReceiptItems' => 'required|array|min:1',
+            'importReceiptItems.*.supplierId' => 'required|exists:suppliers,id',
+            'importReceiptItems.*.bookId' => 'required|exists:books,id',
+            'importReceiptItems.*.quantity' => 'required|integer|min:1',
         ];
     }
 }
