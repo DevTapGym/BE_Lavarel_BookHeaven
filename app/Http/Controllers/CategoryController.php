@@ -14,7 +14,7 @@ class CategoryController extends Controller
         try {
             $categories = Category::all();
 
-            $categories->load('books');
+            //$categories->load('books');
             return $this->successResponse(
                 200,
                 'Categories retrieved successfully',

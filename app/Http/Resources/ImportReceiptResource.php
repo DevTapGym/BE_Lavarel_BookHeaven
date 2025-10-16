@@ -13,15 +13,18 @@ class ImportReceiptResource extends JsonResource
             'id'            => $this->id,
             'receipt_number' => $this->receipt_number,
             'notes'         => $this->notes,
-            'total_amount'  => $this->total_amount,
-            'created_at'    => $this->created_at->format('Y-m-d H:i:s'),
+            'totalAmount'  => $this->total_amount,
+            'createdAt'    => $this->created_at ? $this->created_at->toISOString() : null,
+            'updatedAt'    => $this->updated_at ? $this->updated_at->toISOString() : null,
+            'createdBy'  => $this->created_by ? $this->created_by : null,
+            'updatedBy'  => $this->updated_by ? $this->updated_by : null,
 
             'employee' => [
                 'id'   => $this->employee->id,
                 'name' => $this->employee->name,
             ],
 
-            'details' => ImportReceiptDetailResource::collection($this->importReceiptDetails),
+            'receiptDetails' => ImportReceiptDetailResource::collection($this->importReceiptDetails),
         ];
     }
 }

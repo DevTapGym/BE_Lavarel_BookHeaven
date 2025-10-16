@@ -21,6 +21,7 @@ use App\Models\InventoryHistory;
 use App\Models\Promotion;
 use App\Models\ShippingAddress;
 use App\Http\Resources\OrderForWebResource;
+use App\Http\Resources\OrderListForWebResource;
 use Illuminate\Validation\ValidationException;
 use Exception;
 
@@ -121,16 +122,9 @@ class OrderController extends Controller
             }
 
             // Lấy tất cả đơn hàng của user thông qua customer_id
-            $orders = Order::whereHas('shippingAddress', function ($query) use ($user) {
-                $query->where('customer_id', $user->customer_id);
-            })
+            $orders = Order::where('customer_id', $user->customer_id)
                 ->with([
-                    'orderItems.book.categories.books.bookImages',
                     'orderItems.book.bookImages',
-                    'shippingAddress.customer.user',
-                    'shippingAddress.customer.cart.cartItems.book.categories.books.bookImages',
-                    'shippingAddress.customer.cart.cartItems.book.bookImages',
-                    'paymentMethod',
                     'statusHistories.orderStatus'
                 ])
                 ->orderBy('created_at', 'desc')
@@ -139,7 +133,7 @@ class OrderController extends Controller
             return $this->successResponse(
                 200,
                 'User orders retrieved successfully',
-                OrderForWebResource::collection($orders)
+                OrderListForWebResource::collection($orders)
             );
         } catch (Exception $e) {
             return $this->errorResponse(
@@ -366,17 +360,16 @@ class OrderController extends Controller
     }
 
 
-    public function createOrderForWeb(Request $request)
+    public function placeOrderForWeb(Request $request)
     {
         try {
             $validated = $request->validate([
                 'accountId'     => 'required|integer',
+                'address'       => 'required|string|max:500',
                 'email'         => 'required|email',
                 'name'          => 'required|string|max:255',
-                'address'       => 'required|string|max:500',
-                'phone'         => 'required|string|max:20',
-                'totalPrice'    => 'required|numeric|min:0',
                 'paymentMethod' => 'required|string|in:cod,banking',
+                'phone'         => 'required|string|max:20',
             ]);
 
             return DB::transaction(function () use ($validated) {
@@ -391,15 +384,6 @@ class OrderController extends Controller
                 }
 
                 $customerId = $user->customer_id;
-
-                $shippingAddress = ShippingAddress::create([
-                    'customer_id'    => $customerId,
-                    'recipient_name' => $validated['name'],
-                    'address'        => $validated['address'],
-                    'phone_number'   => $validated['phone'],
-                    'is_default'     => false,
-                    'tag_id'         => 1,
-                ]);
 
                 // Lấy cart của user
                 $cart = Cart::where('customer_id', $customerId)->first();
@@ -467,12 +451,15 @@ class OrderController extends Controller
 
                 // Tạo order
                 $orderData = [
+                    'customer_id'         => $customerId,
                     'order_number'        => $orderNumber,
                     'total_amount'        => $totalAmount,
                     'note'                => null,
                     'shipping_fee'        => 30000,
-                    'shipping_address_id' => $shippingAddress->id,
-                    'payment_method_id'   => 1,
+                    'payment_method'     => $validated['paymentMethod'],
+                    'receiver_name'      => $validated['name'],
+                    'receiver_address'    => $validated['address'],
+                    'receiver_phone'      => $validated['phone'],
                 ];
 
                 $order = Order::create($orderData);
@@ -500,8 +487,8 @@ class OrderController extends Controller
                 // Cập nhật lại totals của cart
                 $this->updateCartTotals($cart->id);
 
-                // Load relationships
-                $order->load(['orderItems.book', 'shippingAddress', 'paymentMethod', 'statusHistories.orderStatus']);
+                // Load relationships (không có shippingAddress vì lưu trực tiếp receiver_name và receiver_address)
+                $order->load(['orderItems.book', 'statusHistories.orderStatus']);
 
                 return $this->successResponse(
                     201,

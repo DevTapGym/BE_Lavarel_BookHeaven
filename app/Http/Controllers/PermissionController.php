@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Permission;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 
 class PermissionController extends Controller
 {
@@ -22,8 +24,21 @@ class PermissionController extends Controller
     public function indexPaginated(Request $request)
     {
         $pageSize = $request->query('size', 10);
-        $paginator = Permission::paginate($pageSize);
-        $data = $this->paginateResponse($paginator);
+
+        $permissions = QueryBuilder::for(Permission::class)
+            ->allowedFilters([
+                AllowedFilter::partial('name'),
+                AllowedFilter::partial('apiPath'),
+                AllowedFilter::partial('module'),
+
+            ])
+            ->allowedSorts([
+                'created_at',
+            ])
+            ->defaultSort('-created_at')
+            ->paginate($pageSize);
+
+        $data = $this->paginateResponse($permissions);
 
         return $this->successResponse(
             200,

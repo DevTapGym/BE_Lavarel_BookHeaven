@@ -18,6 +18,9 @@ class Order extends Model
         'total_promotion_value',
 
         'customer_id',
+        'receiver_name',
+        'receiver_address',
+        'receiver_phone',
     ];
 
     // Removed relations to paymentMethod and shippingAddress as per new requirement

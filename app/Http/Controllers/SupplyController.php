@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Supply;
 use Illuminate\Http\Request;
 use App\Http\Resources\SupplyResource;
+use App\Http\Resources\SupplyListResource;
 use Illuminate\Validation\Rule;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
 
 class SupplyController extends Controller
 {
@@ -39,9 +43,31 @@ class SupplyController extends Controller
     public function indexPaginated(Request $request)
     {
         $pageSize = $request->query('size', 10);
-        $paginator = Supply::paginate($pageSize);
-        $data = $this->paginateResponse($paginator);
 
+        $paginator = QueryBuilder::for(Supply::class)
+            ->with(['book', 'supplier'])
+            ->allowedFilters([
+                AllowedFilter::exact('book_id'),
+                AllowedFilter::exact('supplier_id'),
+            ])
+            ->allowedSorts([
+                AllowedSort::field('book_title', 'books.title'),
+                AllowedSort::field('supplier_name', 'suppliers.name'),
+                'supply_price',
+                'updated_at',
+                'created_at',
+            ])
+            ->defaultSort('-created_at')
+            ->join('books', 'supplies.book_id', '=', 'books.id')
+            ->join('suppliers', 'supplies.supplier_id', '=', 'suppliers.id')
+            ->select('supplies.*')
+            ->paginate($pageSize);
+
+        $paginator->setCollection(
+            collect(SupplyListResource::collection($paginator->items()))
+        );
+
+        $data = $this->paginateResponse($paginator);
         return $this->successResponse(
             200,
             'Supply retrieved successfully',
