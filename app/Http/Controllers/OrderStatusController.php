@@ -10,13 +10,18 @@ class OrderStatusController extends Controller
     public function index()
     {
         $statuses = OrderStatus::all();
+        $data = $statuses->map(function ($status) {
+            return [
+                'id' => $status->id,
+                'status' => $status->name,
+                "label" => $status->description,
+            ];
+        });
+
         return $this->successResponse(
             200,
             'Order status retrieved successfully',
-            [
-                'id' => $statuses->id,
-                'status' => $statuses->name,
-            ]
+            $data
         );
     }
 
