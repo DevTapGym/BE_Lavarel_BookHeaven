@@ -94,7 +94,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::post('/logo-payment', [UploadController::class, 'uploadLogoPaymentMethod'])->name('upload.logo.payment.method');
     });
 
-    Route::prefix('/customer')->group(function () {
+    Route::prefix('/customers')->group(function () {
         Route::get('/', [CustomerController::class, 'indexPaginated'])->name('view.customers');
         Route::get('/{customer}', [CustomerController::class, 'show'])->name('show.customer');
         Route::post('/', [CustomerController::class, 'store'])->name('create.customer');
@@ -102,7 +102,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::delete('/{customer}', [CustomerController::class, 'destroy'])->name('delete.customer');
     });
 
-    Route::prefix('/employee')->group(function () {
+    Route::prefix('/employees')->group(function () {
         Route::get('/', [EmployeeController::class, 'indexPaginated'])->name('view.employees');
         Route::get('/{employee}', [EmployeeController::class, 'show'])->name('show.employee');
         Route::post('/', [EmployeeController::class, 'store'])->name('create.employee');
@@ -222,6 +222,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
 
     Route::prefix('/role')->group(function () {
         Route::get('/', [RoleController::class, 'getAllRoles'])->name('view.roles');
+        Route::get('/no-pagination', [RoleController::class, 'index'])->name('view.roles.no.pagination');
         Route::get('/{role}', [RoleController::class, 'show'])->name('show.role');
         Route::post('/', [RoleController::class, 'store'])->name('create.role');
         Route::put('/', [RoleController::class, 'update'])->name('update.role');
@@ -244,7 +245,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::delete('/{promotion}', [PromotionController::class, 'destroy'])->name('delete.promotion');
     });
 
-    Route::prefix('/account')->group(function () {
+    Route::prefix('/accounts')->group(function () {
         Route::get('/', [AccountController::class, 'indexPaginated'])->name('view.accounts');
         Route::get('/{user}', [AccountController::class, 'show'])->name('show.account');
         Route::post('/', [AccountController::class, 'store'])->name('create.account');

@@ -128,6 +128,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'place order for web', 'guard_name' => 'api', 'apiPath' => '/v1/order/place/web', 'method' => 'POST', 'module' => 'Order'],
 
             ['name' => 'view roles', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'GET', 'module' => 'Role'],
+            ['name' => 'view roles no pagination', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'GET', 'module' => 'Role'],
             ['name' => 'show role', 'guard_name' => 'api', 'apiPath' => '/v1/role/{role}', 'method' => 'GET', 'module' => 'Role'],
             ['name' => 'create role', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'POST', 'module' => 'Role'],
             ['name' => 'update role', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'PUT', 'module' => 'Role'],

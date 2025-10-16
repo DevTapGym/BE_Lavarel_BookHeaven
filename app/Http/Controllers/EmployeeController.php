@@ -94,7 +94,7 @@ class EmployeeController extends Controller
             return $this->successResponse(
                 200,
                 'Employee deleted successfully',
-                null
+                'Employee deleted successfully'
             );
         } catch (Throwable $th) {
             return $this->errorResponse(

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Resources\UserAccountResource;
+use App\Http\Resources\UserAccountListResource;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 
@@ -13,7 +14,14 @@ class AccountController extends Controller
     public function indexPaginated(Request $request)
     {
         $pageSize = $request->query('size', 10);
-        $paginator = User::paginate($pageSize);
+
+        $paginator = User::with(['roles', 'customer', 'employee'])
+            ->paginate($pageSize);
+
+        $paginator->setCollection(
+            collect(UserAccountListResource::collection($paginator->items()))
+        );
+
         $data = $this->paginateResponse($paginator);
 
         return $this->successResponse(
@@ -40,9 +48,8 @@ class AccountController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
-            'password' => 'required|string|min:8|max:255',
-            'role' => 'required|string|exists:roles,name',
-            'is_active' => 'sometimes|boolean',
+            'password' => 'required|string|min:6|max:255',
+            'role' => 'required|int|exists:roles,id',
             'customer_id' => 'sometimes|nullable|integer|exists:customers,id',
             'employee_id' => 'sometimes|nullable|integer|exists:employees,id',
         ]);
@@ -54,7 +61,7 @@ class AccountController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'is_active' => $validated['is_active'] ?? true,
+                'is_active' => true,
                 'customer_id' => $validated['customer_id'] ?? null,
                 'employee_id' => $validated['employee_id'] ?? null,
             ];
@@ -88,8 +95,7 @@ class AccountController extends Controller
         $validated = $request->validate([
             'id' => 'required|integer|exists:users,id',
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|max:255',
-            'role' => 'sometimes|string|exists:roles,name',
+            'role' => 'sometimes|int|exists:roles,id',
             'is_active' => 'sometimes|boolean',
             'customer_id' => 'sometimes|nullable|integer|exists:customers,id',
             'employee_id' => 'sometimes|nullable|integer|exists:employees,id',
@@ -105,13 +111,6 @@ class AccountController extends Controller
             );
         }
 
-        // Validation cho email unique với ignore current user
-        if (isset($validated['email'])) {
-            $emailValidation = $request->validate([
-                'email' => 'required|email|max:255|unique:users,email,' . $user->id
-            ]);
-            $validated['email'] = $emailValidation['email'];
-        }
 
         if (isset($validated['name'])) {
             $user->name = $validated['name'];

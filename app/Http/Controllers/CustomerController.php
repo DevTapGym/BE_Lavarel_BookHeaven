@@ -40,6 +40,11 @@ class CustomerController extends Controller
                 'date_of_birth' => 'nullable|date',
             ]);
 
+            if (!empty($validated['date_of_birth'])) {
+                $validated['date_of_birth'] = date('Y-m-d', strtotime($validated['date_of_birth']));
+            }
+
+
             $customer = Customer::create($validated);
             return $this->successResponse(
                 201,
@@ -64,7 +69,7 @@ class CustomerController extends Controller
                 'email' => 'sometimes|required|email|unique:customers,email,' . $request->id,
                 'phone' => 'nullable|string|max:10',
                 'address' => 'nullable|string|max:255',
-                'gender' => 'nullable|in:male,female,other',
+                'gender' => 'nullable|in:Nam,Nữ,Khác',
                 'date_of_birth' => 'nullable|date',
             ]);
 
@@ -99,7 +104,7 @@ class CustomerController extends Controller
             return $this->successResponse(
                 200,
                 'Customer deleted successfully',
-                null
+                'Customer deleted successfully'
             );
         } catch (Throwable $th) {
             return $this->errorResponse(
