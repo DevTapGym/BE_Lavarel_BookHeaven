@@ -9,9 +9,18 @@ class OrderItem extends Model
     protected $fillable = [
         'quantity',
         'price',
+        'return_qty',
 
         'order_id',
         'book_id',
+    ];
+
+    protected $casts = [
+        'quantity' => 'integer',
+        'price' => 'decimal:2',
+        'return_qty' => 'integer',
+        'order_id' => 'integer',
+        'book_id' => 'integer',
     ];
 
     public function order()

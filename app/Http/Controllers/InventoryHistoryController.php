@@ -45,6 +45,9 @@ class InventoryHistoryController extends Controller
             ];
             $dbField = $fieldMap[$sortField] ?? $sortField;
             $query->orderBy($dbField, $sortDir);
+        } else {
+            // Default sort by created_at descending
+            $query->orderBy('created_at', 'desc');
         }
 
         $paginator = $query->with(['book'])->paginate($pageSize);

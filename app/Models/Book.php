@@ -18,6 +18,14 @@ class Book extends Model
         'sale_off',
     ];
 
+    protected $casts = [
+        'price' => 'decimal:2',
+        'quantity' => 'integer',
+        'sold' => 'integer',
+        'sale_off' => 'decimal:2',
+        'is_active' => 'boolean',
+    ];
+
     public function categories()
     {
         return $this->belongsToMany(Category::class, 'book_category', 'book_id', 'category_id');
