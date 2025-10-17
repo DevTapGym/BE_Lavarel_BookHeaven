@@ -203,6 +203,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::post('/create', [OrderController::class, 'createOrder'])->name('create.order');
         Route::post('/place', [OrderController::class, 'placeOrder'])->name('place.order');
         Route::post('/place/web', [OrderController::class, 'placeOrderForWeb'])->name('place.order.for.web');
+        Route::post('/return/{id}', [OrderController::class, 'returnOrder'])->name('return.order');
         Route::get('/{order}', [OrderController::class, 'show'])->name('show.order');
         Route::put('/', [OrderController::class, 'updateOrder'])->name('update.order');
     });

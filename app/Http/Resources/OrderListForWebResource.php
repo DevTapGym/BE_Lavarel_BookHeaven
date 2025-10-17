@@ -28,6 +28,7 @@ class OrderListForWebResource extends JsonResource
                     'shippingStatus' => [
                         'id' => $history->orderStatus->id,
                         'status' => $history->orderStatus->name,
+                        'label' => $history->orderStatus->description,
                     ],
                     'note' => $history->note,
                 ];
