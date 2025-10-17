@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use App\Models\ImportReceiptDetail;
 use App\Models\Supply;
 use App\Models\Employee;
+use App\Models\Book;
+use App\Models\InventoryHistory;
 use App\Http\Resources\ImportReceiptResource;
 use Carbon\Carbon;
 
@@ -68,13 +70,10 @@ class ImportReceiptController extends Controller
     public function store(ImportReceiptRequest $request)
     {
         return DB::transaction(function () use ($request) {
-            // Tìm employee_id bằng email
             $employee = Employee::where('email', $request->employeeEmail)->firstOrFail();
 
-            // Tạo receipt_number tự động
             $receiptNumber = $this->generateReceiptNumber();
 
-            // Tính tổng tiền từ details
             $totalAmount = 0;
             foreach ($request->importReceiptItems as $detail) {
                 // Tìm supply dựa trên book_id và supplier_id
@@ -94,7 +93,6 @@ class ImportReceiptController extends Controller
                 'created_by' => $request->employeeEmail,
             ]);
 
-            // Tạo chi tiết phiếu nhập và cập nhật số lượng sách
             foreach ($request->importReceiptItems as $detail) {
                 // Tìm supply dựa trên book_id và supplier_id
                 $supply = Supply::where('book_id', $detail['bookId'])
@@ -103,19 +101,34 @@ class ImportReceiptController extends Controller
 
                 $price = $supply->supply_price;
 
+                $book = $supply->book;
+                
                 ImportReceiptDetail::create([
                     'import_receipt_id' => $importReceipt->id,
                     'supply_id' => $supply->id,
                     'quantity' => $detail['quantity'],
                     'price' => $price,
                 ]);
+                
+    
+                InventoryHistory::create([
+                    'book_id' => $book->id,
+                    'import_receipt_id' => $importReceipt->id,
+                    'type' => 'IN',
+                    'qty_stock_before' => $book->quantity,
+                    'qty_change' => (int) $detail['quantity'],
+                    'qty_stock_after' => $book->quantity + $detail['quantity'],
+                    'price' => $book->price,
+                    'total_price' => $detail['quantity'] * $book->price,
+                    'transaction_date' => now(),
+                    'description' => 'Nhập kho - ' . $importReceipt->receipt_number,
+                ]);
 
                 // Cập nhật số lượng sách
-                $book = $supply->book;
                 $book->increment('quantity', $detail['quantity']);
             }
 
-            $importReceipt->load('importReceiptDetails');
+            $importReceipt->load('importReceiptDetails.supply.book');
 
             return $this->successResponse(
                 201,
