@@ -135,18 +135,15 @@ class AuthController extends Controller
             200,
             'Get user info successful',
             [
-                'account' => [
-                    'id'        => $user->id,
-                    'email'     => $user->email,
-                    'name'      => $user->name,
-                    'avatar'    => $user->avatar,
-                    'phone'     => $user->customer->phone ?? null,
-                    'role'      => $user->roles()->pluck('name')->first() ?? 'user',
-                    'customer'  => $user->customer,
-                    'is_active' => $user->is_active,
-                    'date_of_birth' => $user->customer->date_of_birth ?? null,
-                    'gender'    => $user->customer->gender ?? null,
-                ]
+                'id'        => $user->id,
+                'name'      => $user->name,
+                'email'     => $user->email,
+                'phone'     => $user->customer->phone ?? null,
+                'avatar'    => $user->avatar,
+                'gender'    => $user->customer->gender ?? null,
+                'date_of_birth' => $user->customer->date_of_birth ?? null,
+                'role'      => $user->roles()->pluck('name')->first() ?? 'user',
+                'is_active' => $user->is_active,
             ]
         );
     }
@@ -168,8 +165,6 @@ class AuthController extends Controller
         );
     }
 
-
-
     public function updateProfile(Request $request)
     {
         try {
@@ -187,7 +182,7 @@ class AuthController extends Controller
                 'name' => 'sometimes|string|max:255',
                 'date_of_birth' => 'sometimes|date|before:today',
                 'phone' => 'sometimes|string|max:10|regex:/^0[0-9]{9,10}$/',
-                'gender' => 'sometimes|in:Male,Female,Other',
+                'gender' => 'sometimes|in:Nam,Nữ,Khác',
             ]);
 
             return DB::transaction(function () use ($user, $validated) {

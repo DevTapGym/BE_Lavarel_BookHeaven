@@ -9,10 +9,11 @@ use App\Models\Book;
 
 /**
  * @property string|null $note
- * @property float $shipping_fee
- * @property int $shipping_address_id
- * @property int $payment_method_id
+ * @property string $payment_method
  * @property int $cart_id
+ * @property string $phone
+ * @property string $address
+ * @property string $name
  */
 class PlaceOrderRequest extends FormRequest
 {
@@ -25,10 +26,11 @@ class PlaceOrderRequest extends FormRequest
     {
         return [
             'note'                 => 'nullable|string|max:500',
-            'shipping_fee'         => 'required|numeric|min:0',
-            'shipping_address_id'  => 'required|exists:shipping_addresses,id',
-            'payment_method_id'    => 'required|exists:payment_methods,id',
+            'payment_method'       => 'required|string',
             'cart_id'              => 'required|exists:carts,id',
+            'phone'                => 'required|string|max:20',
+            'address'              => 'required|string|max:500',
+            'name'                 => 'required|string|max:255',
         ];
     }
 

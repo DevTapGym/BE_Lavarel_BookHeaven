@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Order extends Model
 {
@@ -23,7 +24,21 @@ class Order extends Model
         'receiver_phone',
     ];
 
-    // Removed relations to paymentMethod and shippingAddress as per new requirement
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    public function getCreatedAtAttribute($value)
+    {
+        return Carbon::parse($value)->setTimezone('Asia/Ho_Chi_Minh');
+    }
+
+    public function getUpdatedAtAttribute($value)
+    {
+        return Carbon::parse($value)->setTimezone('Asia/Ho_Chi_Minh');
+    }
+
 
     public function orderItems()
     {
