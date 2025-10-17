@@ -161,7 +161,7 @@ class OrderController extends Controller
 
     public function getOrdersByUser(Request $request)
     {
-        $pageSize = $request->query('size', 10);
+        $pageSize = $request->query('size', 20);
 
         $user = Auth::user();
 
@@ -611,6 +611,15 @@ class OrderController extends Controller
     public function placeOrder(PlaceOrderRequest $request)
     {
         return DB::transaction(function () use ($request) {
+            $user = Auth::user();
+            if (!$user || !$user->customer_id) {
+                return $this->errorResponse(
+                    404,
+                    'Not Found',
+                    'User not found or user is not a customer'
+                );
+            }
+
             $selectedCartItems = CartItem::where('cart_id', $request->cart_id)
                 ->where('is_selected', true)
                 ->with('book')
@@ -647,33 +656,46 @@ class OrderController extends Controller
                     );
                 }
 
-                $itemTotal = $book->price * $cartItem->quantity;
+                // Tính giá: nếu có sale_off thì dùng giá sale, không thì dùng giá gốc
+                $finalPrice = $book->price;
+                if (!is_null($book->sale_off) && $book->sale_off > 0) {
+                    $finalPrice = $book->price * ($book->sale_off / 100);
+                }
+
+                $itemTotal = $finalPrice * $cartItem->quantity;
                 $totalAmount += $itemTotal;
 
-                $validatedItems[] = $cartItem;
+                $validatedItems[] = [
+                    'cartItem' => $cartItem,
+                    'finalPrice' => $finalPrice
+                ];
             }
 
             $orderNumber = $this->generateOrderNumber();
 
             $orderData = [
-                'order_number'        => $orderNumber,
-                'total_amount'        => $totalAmount,
-                'note'                => $request->note,
-                'shipping_fee'        => $request->shipping_fee ?? 0,
-                'shipping_address_id' => $request->shipping_address_id,
-                'payment_method_id'   => $request->payment_method_id,
+                'order_number'          => $orderNumber,
+                'total_amount'          => $totalAmount,
+                'note'                  => $request->note,
+                'customer_id'           => $user->customer_id,
+                'shipping_fee'          => 30000,
+                'payment_method'        => $request->payment_method,
+                'receiver_name'         => $request->name,
+                'receiver_address'      => $request->address,
+                'receiver_phone'        => $request->phone,
             ];
 
             $order = Order::create($orderData);
 
             // Tạo order items và cập nhật stock
-            foreach ($validatedItems as $cartItem) {
+            foreach ($validatedItems as $item) {
+                $cartItem = $item['cartItem'];
                 $book = $cartItem->book;
 
                 $order->orderItems()->create([
                     'book_id'  => $cartItem->book_id,
                     'quantity' => $cartItem->quantity,
-                    'price'    => $book->price,
+                    'price'    => $item['finalPrice'], // Sử dụng giá đã tính (có sale_off hoặc giá gốc)
                 ]);
 
                 $book->decrement('quantity', $cartItem->quantity);
@@ -687,7 +709,7 @@ class OrderController extends Controller
 
             $this->updateCartTotals($request->cart_id);
 
-            $order->load(['orderItems.book', 'shippingAddress', 'paymentMethod', 'statusHistories.orderStatus']);
+            $order->load(['orderItems.book', 'statusHistories.orderStatus']);
 
             return $this->successResponse(
                 201,

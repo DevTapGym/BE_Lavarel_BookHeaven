@@ -21,21 +21,10 @@ class OrderResource extends JsonResource
             'shipping_fee' => $this->shipping_fee,
             'note' => $this->note,
             'created_at' => $this->created_at,
-
-            // Shipping Address Information
-            'shipping_address' => [
-                'id' => $this->shippingAddress->id ?? null,
-                'recipient_name' => $this->shippingAddress->recipient_name ?? null,
-                'address' => $this->shippingAddress->address ?? null,
-                'phone_number' => $this->shippingAddress->phone_number ?? null,
-                'tag_name' => $this->shippingAddress->tag->name ?? null,
-            ],
-
-            // Payment Method
-            'payment_method' => [
-                'id' => $this->paymentMethod->id ?? null,
-                'name' => $this->paymentMethod->name ?? null,
-            ],
+            'payment_method' => $this->payment_method,
+            'receiver_name' => $this->receiver_name,
+            'receiver_address' => $this->receiver_address,
+            'receiver_phone' => $this->receiver_phone,
 
             // Order Items
             'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
