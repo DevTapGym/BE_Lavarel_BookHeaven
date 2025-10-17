@@ -773,6 +773,19 @@ class OrderController extends Controller
                         $currentSold = (int) ($orderItem->book->sold ?? 0);
                         $newSold = max(0, $currentSold - (int) $orderItem->quantity);
                         $orderItem->book->update(['sold' => $newSold]);
+
+                        InventoryHistory::create([
+                            'book_id' => $orderItem->book_id,
+                            'order_id' => $order->id,
+                            'type' => 'IN',
+                            'qty_stock_before' => $orderItem->book->quantity,
+                            'qty_change' => (int) $orderItem->quantity,
+                            'qty_stock_after' => $orderItem->book->quantity + (int) $orderItem->quantity,
+                            'price' => $orderItem->book->price,
+                            'total_price' => $orderItem->book->price * $orderItem->quantity,
+                            'transaction_date' => now(),
+                            'description' => 'Nhập kho do hủy đơn hàng',
+                        ]);
                     }
                 }
             }
