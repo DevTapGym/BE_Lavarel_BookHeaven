@@ -39,4 +39,9 @@ class Order extends Model
     {
         return $this->belongsTo(Promotion::class);
     }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
 }

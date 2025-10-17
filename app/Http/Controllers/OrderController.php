@@ -19,11 +19,10 @@ use Carbon\Carbon;
 use App\Http\Resources\OrderResource;
 use App\Models\InventoryHistory;
 use App\Models\Promotion;
-use App\Models\ShippingAddress;
-use App\Http\Resources\OrderForWebResource;
 use App\Http\Resources\OrderListForWebResource;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
+use App\Models\Customer;
 use Exception;
 
 
@@ -49,6 +48,94 @@ class OrderController extends Controller
     {
         $pageSize = $request->query('size', 10);
         $paginator = Order::paginate($pageSize);
+        $paginator = Order::with([
+            'orderItems.book.bookImages',
+            'statusHistories.orderStatus',
+            'promotion',
+            'customer'
+        ])->paginate($pageSize);
+
+        $transformed = $paginator->getCollection()->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'code' => $order->order_number,
+                'type' => null, // not present in schema, set null or derive if needed
+                'totalPrice' => $order->total_amount,
+                'receiverEmail' => $order->customer->email ?? null,
+                'receiverName' => $order->receiver_name,
+                'totalPromotionValue' => $order->total_promotion_value ?? 0,
+                'returnFee' => null,
+                'returnFeeType' => null,
+                'totalRefundAmount' => null,
+                'receiverAddress' => $order->receiver_address,
+                'receiverPhone' => $order->receiver_phone,
+                'paymentMethod' => $order->payment_method ?? null,
+                'vnpTxnRef' => null,
+                'createdBy' => $order->created_by ?? null,
+                'updatedBy' => $order->updated_by ?? null,
+                'createdAt' => $order->created_at,
+                'updatedAt' => $order->updated_at,
+                'customer' => [
+                    'id' => $order->customer->id ?? null,
+                    'name' => $order->customer->name ?? null,
+                    'phone' => $order->customer->phone ?? null,
+                    'email' => $order->customer->email ?? null,
+                ],
+                'orderItems' => $order->orderItems->map(function ($item) {
+                    return [
+                        'id' => $item->id,
+                        'quantity' => $item->quantity,
+                        'price' => $item->price,
+                        'book' => [
+                            'id' => $item->book->id,
+                            'mainText' => $item->book->title,
+                            'author' => $item->book->author,
+                            'price' => $item->book->price,
+                        ],
+                    ];
+                }),
+                'orderShippingEvents' => $order->statusHistories->map(function ($history) {
+                    return [
+                        'id' => $history->id,
+                        'createdAt' => $history->created_at,
+                        'shippingStatus' => [
+                            'id' => $history->orderStatus->id ?? null,
+                            'status' => $history->orderStatus->name ?? null,
+                            'label' => $history->orderStatus->description ?? null,
+                        ],
+                        'note' => $history->note,
+                    ];
+                }),
+                'promotion' => $order->promotion ? [
+                    'id' => $order->promotion->id,
+                    'code' => $order->promotion->code,
+                    'name' => $order->promotion->name,
+                    'status' => $order->promotion->status,
+                    'promotionType' => $order->promotion->promotion_type,
+                    'promotionValue' => $order->promotion->promotion_value,
+                    'isMaxPromotionValue' => $order->promotion->is_max_promotion_value,
+                    'maxPromotionValue' => $order->promotion->max_promotion_value,
+                    'orderMinValue' => $order->promotion->order_min_value,
+                    'startDate' => $order->promotion->start_date,
+                    'endDate' => $order->promotion->end_date,
+                    'qtyLimit' => $order->promotion->qty_limit,
+                    'isOncePerCustomer' => $order->promotion->is_once_per_customer,
+                    'note' => $order->promotion->note,
+                    'isDeleted' => $order->promotion->is_deleted,
+                    'deletedBy' => $order->promotion->deleted_by,
+                    'deletedAt' => $order->promotion->deleted_at,
+                    'createdAt' => $order->promotion->created_at,
+                    'updatedAt' => $order->promotion->updated_at,
+                    'createdBy' => $order->promotion->created_by ?? null,
+                    'updatedBy' => $order->promotion->updated_by ?? null,
+                ] : null,
+                'returnOrders' => [],
+                'parentOrderId' => null,
+            ];
+        });
+
+        $paginator->setCollection($transformed);
+
         $data = $this->paginateResponse($paginator);
 
         return $this->successResponse(
@@ -226,6 +313,11 @@ class OrderController extends Controller
         return DB::transaction(function () use ($request) {
             $orderNumber = $this->generateOrderNumber();
 
+            $customer = Customer::find($request->customerId);
+            if (!$customer) {
+                return $this->errorResponse(404, 'Not Found', 'Customer not found');
+            }
+
             $order = Order::create([
                 'order_number'        => $orderNumber,
                 'total_amount'        => 0,
@@ -345,6 +437,10 @@ class OrderController extends Controller
                 'total_amount' => $totalAmount,
                 'promotion_id' => $order->promotion_id ?? null,
                 'total_promotion_value' => $order->total_promotion_value ?? 0,
+                'customer_id' => $request->customerId,
+                'receiver_name' => $request->receiverName ? $request->receiverName : $customer->name,
+                'receiver_address' => $request->receiverAddress ? $request->receiverAddress : $customer->address,
+                'receiver_phone' => $request->receiverPhone ? $request->receiverPhone : $customer->phone,
             ]);
 
 
@@ -601,6 +697,41 @@ class OrderController extends Controller
         });
     }
 
+    public function updateOrder(Request $request)
+    {
+        return DB::transaction(function () use ($request) {
+            $order = Order::find($request->id);
+            if (!$order) {
+                return $this->errorResponse(404, 'Not Found', 'Order not found');
+            }
+            $validated = $request->validate([
+                'statusId' => 'required|exists:order_statuses,id',
+                'note' => 'nullable|string|max:500',
+            ]);
+
+            // Restock books if order is canceled
+            $newStatus = OrderStatus::find($validated['statusId']);
+            if ($newStatus && $newStatus->name === 'canceled') {
+                $order->loadMissing('orderItems.book');
+                foreach ($order->orderItems as $orderItem) {
+                    if ($orderItem->book) {
+                        $orderItem->book->increment('quantity', (int) $orderItem->quantity);
+                        $currentSold = (int) ($orderItem->book->sold ?? 0);
+                        $newSold = max(0, $currentSold - (int) $orderItem->quantity);
+                        $orderItem->book->update(['sold' => $newSold]);
+                    }
+                }
+            }
+            $order->statusHistories()->create([
+                'order_status_id' => $validated['statusId'],
+                'note' => $validated['note'] ?? null,
+            ]);
+            $order->update([
+                'status_id' => $validated['statusId'],
+            ]);
+            return $this->successResponse(200, 'Order updated successfully', $order);
+        });
+    }
 
 
     /**
@@ -691,7 +822,7 @@ class OrderController extends Controller
             // swallow QR errors; continue rendering without QR
         }
 
-        $html = view('orders.print_pdf', [ 'order' => $order, 'qrImg' => $qrImg ])->render();
+        $html = view('orders.print_pdf', ['order' => $order, 'qrImg' => $qrImg])->render();
 
         $options = new \Dompdf\Options();
         $options->set('defaultFont', 'DejaVu Sans');
@@ -703,6 +834,6 @@ class OrderController extends Controller
 
         return response($dompdf->output(), 200)
             ->header('Content-Type', 'application/pdf')
-            ->header('Content-Disposition', 'inline; filename="order_'.$id.'.pdf"');
+            ->header('Content-Disposition', 'inline; filename="order_' . $id . '.pdf"');
     }
 }
