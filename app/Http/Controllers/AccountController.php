@@ -5,22 +5,83 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Resources\UserAccountResource;
+use App\Http\Resources\UserAccountListResource;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
+use Throwable;
 
 class AccountController extends Controller
 {
     public function indexPaginated(Request $request)
     {
-        $pageSize = $request->query('size', 10);
-        $paginator = User::paginate($pageSize);
-        $data = $this->paginateResponse($paginator);
+        try {
+            $pageSize = $request->query('size', 10);
 
-        return $this->successResponse(
-            200,
-            'Account retrieved successfully',
-            $data
-        );
+            // Dùng QueryBuilder để build query động
+            $paginator = QueryBuilder::for(User::class)
+                ->with(['roles', 'customer', 'employee'])
+                ->allowedFilters([
+                    // Lọc theo cột trong bảng users
+                    AllowedFilter::partial('name'),
+                    AllowedFilter::partial('email'),
+
+                    // Lọc theo số điện thoại của customer hoặc employee
+                    AllowedFilter::callback('phone', function ($query, $value) {
+                        $query->whereHas('customer', function ($q) use ($value) {
+                            $q->where('phone', 'like', "%{$value}%");
+                        })->orWhereHas('employee', function ($q) use ($value) {
+                            $q->where('phone', 'like', "%{$value}%");
+                        });
+                    }),
+
+                    // Lọc theo tên vai trò (role name)
+                    AllowedFilter::callback('role', function ($query, $value) {
+                        $query->whereHas('roles', function ($q) use ($value) {
+                            $q->where('name', 'like', "%{$value}%");
+                        });
+                    }),
+                ])
+                ->allowedSorts([
+                    'id',
+                    'name',
+                    'email',
+                    'created_at',
+                    'updated_at',
+
+                    // Sắp theo số điện thoại (customer trước, employee sau)
+                    AllowedSort::custom('phone', new class implements \Spatie\QueryBuilder\Sorts\Sort {
+                        public function __invoke($query, $descending, string $property)
+                        {
+                            $direction = $descending ? 'desc' : 'asc';
+                            $query->leftJoin('customers', 'users.customer_id', '=', 'customers.id')
+                                ->orderBy('customers.phone', $direction);
+                        }
+                    }),
+                ])
+                ->paginate($pageSize)
+                ->appends(request()->query());
+
+            $paginator->setCollection(
+                collect(UserAccountListResource::collection($paginator->items()))
+            );
+
+            $data = $this->paginateResponse($paginator);
+
+            return $this->successResponse(
+                200,
+                'Accounts retrieved successfully',
+                $data
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error retrieving accounts',
+                $th->getMessage()
+            );
+        }
     }
 
     public function show(User $user)
@@ -40,9 +101,8 @@ class AccountController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email|max:255',
-            'password' => 'required|string|min:8|max:255',
-            'role' => 'required|string|exists:roles,name',
-            'is_active' => 'sometimes|boolean',
+            'password' => 'required|string|min:6|max:255',
+            'role' => 'required|int|exists:roles,id',
             'customer_id' => 'sometimes|nullable|integer|exists:customers,id',
             'employee_id' => 'sometimes|nullable|integer|exists:employees,id',
         ]);
@@ -54,7 +114,7 @@ class AccountController extends Controller
                 'name' => $validated['name'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),
-                'is_active' => $validated['is_active'] ?? true,
+                'is_active' => true,
                 'customer_id' => $validated['customer_id'] ?? null,
                 'employee_id' => $validated['employee_id'] ?? null,
             ];
@@ -88,8 +148,7 @@ class AccountController extends Controller
         $validated = $request->validate([
             'id' => 'required|integer|exists:users,id',
             'name' => 'sometimes|string|max:255',
-            'email' => 'sometimes|email|max:255',
-            'role' => 'sometimes|string|exists:roles,name',
+            'role' => 'sometimes|int|exists:roles,id',
             'is_active' => 'sometimes|boolean',
             'customer_id' => 'sometimes|nullable|integer|exists:customers,id',
             'employee_id' => 'sometimes|nullable|integer|exists:employees,id',
@@ -105,13 +164,6 @@ class AccountController extends Controller
             );
         }
 
-        // Validation cho email unique với ignore current user
-        if (isset($validated['email'])) {
-            $emailValidation = $request->validate([
-                'email' => 'required|email|max:255|unique:users,email,' . $user->id
-            ]);
-            $validated['email'] = $emailValidation['email'];
-        }
 
         if (isset($validated['name'])) {
             $user->name = $validated['name'];

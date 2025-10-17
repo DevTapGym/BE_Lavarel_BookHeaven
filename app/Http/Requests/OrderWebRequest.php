@@ -11,6 +11,8 @@ use Illuminate\Foundation\Http\FormRequest;
  * @property int $promotionId
  * @property array $orderItems
  * @property array $paymentMethod
+ * @property array $receiverAddress
+ * @property array $receiverPhone
  */
 class OrderWebRequest extends FormRequest
 {

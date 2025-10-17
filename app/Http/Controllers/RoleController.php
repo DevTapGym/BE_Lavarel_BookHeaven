@@ -25,6 +25,7 @@ class RoleController extends Controller
                 'updatedAt' => $role->updated_at,
                 'createdBy' => $role->createdBy ?? null,
                 'updatedBy' => $role->updatedBy ?? null,
+                'description' => $role->description ?? null,
                 'permissions_count' => $role->permissions->count(),
                 'permissions' => $role->permissions->map(function ($permission) {
                     return [
@@ -48,6 +49,22 @@ class RoleController extends Controller
             200,
             'All roles retrieved successfully',
             $data
+        );
+    }
+
+    public function index()
+    {
+        $roles = Role::all()->map(function ($role) {
+            return [
+                'id' => $role->id,
+                'name' => $role->name,
+            ];
+        });
+
+        return $this->successResponse(
+            200,
+            'Roles retrieved successfully',
+            $roles
         );
     }
 
@@ -96,6 +113,7 @@ class RoleController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|unique:roles,name|max:255',
+            'description' => 'sometimes|string|max:1000',
             'permissions' => 'sometimes|array',
             'permissions.*' => 'exists:permissions,id'
         ]);
@@ -103,6 +121,7 @@ class RoleController extends Controller
         return DB::transaction(function () use ($validated) {
             $role = Role::create([
                 'name' => $validated['name'],
+                'description' => $validated['description'] ?? null,
                 'guard_name' => 'api'
             ]);
 
@@ -153,6 +172,7 @@ class RoleController extends Controller
                 'string',
                 'max:255',
             ],
+            'description' => 'sometimes|string|max:1000',
             'permissions' => 'sometimes|array',
             'permissions.*' => 'exists:permissions,id'
         ]);
@@ -178,6 +198,10 @@ class RoleController extends Controller
                 ]
             ]);
             $validated['name'] = $nameValidation['name'];
+        }
+
+        if (isset($validated['description'])) {
+            $role->description = $validated['description'];
         }
 
         return DB::transaction(function () use ($role, $validated) {

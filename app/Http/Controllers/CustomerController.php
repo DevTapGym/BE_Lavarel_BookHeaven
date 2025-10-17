@@ -6,17 +6,49 @@ use App\Models\Customer;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
 
 class CustomerController extends Controller
 {
     public function indexPaginated(Request $request)
     {
-        $pageSize = $request->query('size', 10);
-        $paginator = Customer::paginate($pageSize);
+        try {
+            $pageSize = $request->query('size', 10);
 
-        $data = $this->paginateResponse($paginator);
+            $paginator = QueryBuilder::for(\App\Models\Customer::class)
+                ->allowedFilters([
+                    AllowedFilter::partial('name'),
+                    AllowedFilter::partial('email'),
+                    AllowedFilter::partial('phone'),
+                ])
+                ->allowedSorts([
+                    'id',
+                    'name',
+                    'email',
+                    'phone',
+                    'address',
+                    'created_at',
+                    'updated_at',
+                ])
+                ->paginate($pageSize)
+                ->appends($request->query());
 
-        return $this->successResponse(200, 'Customers retrieved successfully', $data);
+            $data = $this->paginateResponse($paginator);
+
+            return $this->successResponse(
+                200,
+                'Customers retrieved successfully',
+                $data
+            );
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Error retrieving customers',
+                $th->getMessage()
+            );
+        }
     }
 
     public function show(Customer $customer)
@@ -39,6 +71,11 @@ class CustomerController extends Controller
                 'gender' => 'nullable|in:Nam,Nữ,Khác',
                 'date_of_birth' => 'nullable|date',
             ]);
+
+            if (!empty($validated['date_of_birth'])) {
+                $validated['date_of_birth'] = date('Y-m-d', strtotime($validated['date_of_birth']));
+            }
+
 
             $customer = Customer::create($validated);
             return $this->successResponse(
@@ -64,7 +101,7 @@ class CustomerController extends Controller
                 'email' => 'sometimes|required|email|unique:customers,email,' . $request->id,
                 'phone' => 'nullable|string|max:10',
                 'address' => 'nullable|string|max:255',
-                'gender' => 'nullable|in:male,female,other',
+                'gender' => 'nullable|in:Nam,Nữ,Khác',
                 'date_of_birth' => 'nullable|date',
             ]);
 
@@ -99,7 +136,7 @@ class CustomerController extends Controller
             return $this->successResponse(
                 200,
                 'Customer deleted successfully',
-                null
+                'Customer deleted successfully'
             );
         } catch (Throwable $th) {
             return $this->errorResponse(
