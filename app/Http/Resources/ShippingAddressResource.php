@@ -15,8 +15,7 @@ class ShippingAddressResource extends JsonResource
             'address'        => $this->address,
             'phone_number'   => $this->phone_number,
             'is_default'     => $this->is_default,
-            //'customer_id'    => $this->customer_id,
-            //'tag_id'         => $this->tag_id,
+            'tag_id'         => $this->tag->id,
             'tag_name'       => $this->tag?->name,
         ];
     }

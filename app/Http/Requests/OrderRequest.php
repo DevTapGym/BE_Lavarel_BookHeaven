@@ -7,11 +7,11 @@ use Illuminate\Contracts\Validation\Validator;
 use App\Models\Book;
 
 /**
- * @property float $total_amount
  * @property string|null $note
- * @property float $shipping_fee
- * @property int $shipping_address_id
- * @property int $payment_method_id
+ * @property string $payment_method
+ * @property string $phone
+ * @property string $address
+ * @property string $name
  * @property array $items
  */
 class OrderRequest extends FormRequest
@@ -26,10 +26,10 @@ class OrderRequest extends FormRequest
         return [
             // Order fields
             'note'                 => 'nullable|string|max:500',
-            'shipping_fee'         => 'required|numeric|min:0',
-            'shipping_address_id'  => 'required|exists:shipping_addresses,id',
-            'payment_method_id'    => 'required|exists:payment_methods,id',
-            'promotion_id'         => 'nullable|exists:promotions,id',
+            'payment_method'       => 'required|string',
+            'phone'                => 'required|string|max:20',
+            'address'              => 'required|string|max:500',
+            'name'                 => 'required|string|max:255',
 
             // Order items
             'items'                => 'required|array|min:1',
