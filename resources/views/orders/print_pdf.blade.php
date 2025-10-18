@@ -71,13 +71,13 @@
                 </tr>
                 <tr>
                     <td style="font-weight: 400; padding-left: 10px" class="price text-left ver-top pname">
-                        {{ number_format($item->price, 0, ',', '.') }}
+                        {{ number_format(($item->price / $item->quantity), 0, ',', '.') }}
                     </td>
                     <td style="font-weight: 400" class="qty centered ver-top pname">
                         {{ $item->quantity }}
                     </td>
                     <td style="font-weight: 400" class="total text-right ver-top pname">
-                        {{ number_format($item->price * $item->quantity, 0, ',', '.') }}
+                        {{ number_format($item->price, 0, ',', '.') }}
                     </td>
                 </tr>
             @endforeach

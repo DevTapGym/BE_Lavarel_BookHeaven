@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Book;
 use App\Models\User;
 use App\Models\CartItem;
@@ -13,6 +14,7 @@ use App\Models\OrderStatusHistory;
 use App\Http\Requests\OrderRequest;
 use App\Http\Requests\PlaceOrderRequest;
 use App\Http\Requests\OrderWebRequest;
+use App\Http\Requests\ReturnOrderRequest;
 use Illuminate\Support\Facades\DB;
 use App\Models\Cart;
 use Carbon\Carbon;
@@ -47,30 +49,31 @@ class OrderController extends Controller
     public function indexPaginated(Request $request)
     {
         $pageSize = $request->query('size', 10);
-        $paginator = Order::paginate($pageSize);
         $paginator = Order::with([
             'orderItems.book.bookImages',
             'statusHistories.orderStatus',
             'promotion',
             'customer'
-        ])->paginate($pageSize);
+        ])
+        ->orderBy('created_at', 'desc')
+        ->paginate($pageSize);
 
         $transformed = $paginator->getCollection()->map(function ($order) {
             return [
                 'id' => $order->id,
                 'code' => $order->order_number,
-                'type' => null, // not present in schema, set null or derive if needed
-                'totalPrice' => $order->total_amount,
-                'receiverEmail' => $order->customer->email ?? null,
+                'type' => $order->type,
+                'totalPrice' => (float) $order->total_amount,
+                'receiverEmail' => $order->receiver_email ?? $order->customer->email ?? null,
                 'receiverName' => $order->receiver_name,
-                'totalPromotionValue' => $order->total_promotion_value ?? 0,
-                'returnFee' => null,
-                'returnFeeType' => null,
-                'totalRefundAmount' => null,
+                'totalPromotionValue' => (float) ($order->total_promotion_value ?? 0),
+                'returnFee' => $order->return_fee ? (float) $order->return_fee : null,
+                'returnFeeType' => $order->return_fee_type,
+                'totalRefundAmount' => $order->total_refund_amount ? (float) $order->total_refund_amount : null,
                 'receiverAddress' => $order->receiver_address,
                 'receiverPhone' => $order->receiver_phone,
                 'paymentMethod' => $order->payment_method ?? null,
-                'vnpTxnRef' => null,
+                'vnpTxnRef' => $order->vnp_txn_ref,
                 'createdBy' => $order->created_by ?? null,
                 'updatedBy' => $order->updated_by ?? null,
                 'createdAt' => $order->created_at,
@@ -85,12 +88,13 @@ class OrderController extends Controller
                     return [
                         'id' => $item->id,
                         'quantity' => $item->quantity,
-                        'price' => $item->price,
+                        'price' => (float) $item->price,
+                        'returnQty' => $item->return_qty ?? 0,
                         'book' => [
                             'id' => $item->book->id,
                             'mainText' => $item->book->title,
                             'author' => $item->book->author,
-                            'price' => $item->book->price,
+                            'price' => (float) $item->book->price,
                         ],
                     ];
                 }),
@@ -112,16 +116,16 @@ class OrderController extends Controller
                     'name' => $order->promotion->name,
                     'status' => $order->promotion->status,
                     'promotionType' => $order->promotion->promotion_type,
-                    'promotionValue' => $order->promotion->promotion_value,
-                    'isMaxPromotionValue' => $order->promotion->is_max_promotion_value,
-                    'maxPromotionValue' => $order->promotion->max_promotion_value,
-                    'orderMinValue' => $order->promotion->order_min_value,
+                    'promotionValue' => (float) $order->promotion->promotion_value,
+                    'isMaxPromotionValue' => (bool) $order->promotion->is_max_promotion_value,
+                    'maxPromotionValue' => $order->promotion->max_promotion_value ? (float) $order->promotion->max_promotion_value : null,
+                    'orderMinValue' => $order->promotion->order_min_value ? (float) $order->promotion->order_min_value : null,
                     'startDate' => $order->promotion->start_date,
                     'endDate' => $order->promotion->end_date,
                     'qtyLimit' => $order->promotion->qty_limit,
-                    'isOncePerCustomer' => $order->promotion->is_once_per_customer,
+                    'isOncePerCustomer' => (bool) $order->promotion->is_once_per_customer,
                     'note' => $order->promotion->note,
-                    'isDeleted' => $order->promotion->is_deleted,
+                    'isDeleted' => (bool) $order->promotion->is_deleted,
                     'deletedBy' => $order->promotion->deleted_by,
                     'deletedAt' => $order->promotion->deleted_at,
                     'createdAt' => $order->promotion->created_at,
@@ -129,8 +133,36 @@ class OrderController extends Controller
                     'createdBy' => $order->promotion->created_by ?? null,
                     'updatedBy' => $order->promotion->updated_by ?? null,
                 ] : null,
-                'returnOrders' => [],
-                'parentOrderId' => null,
+                'returnOrders' => $order->returnOrders->sortByDesc('created_at')->values()->map(function ($returnOrder) {
+                    return [
+                        'id' => $returnOrder->id,
+                        'code' => $returnOrder->order_number,
+                        'type' => $returnOrder->type,
+                        'totalPrice' => (float) $returnOrder->total_amount,
+                        'returnFee' => $returnOrder->return_fee ? (float) $returnOrder->return_fee : null,
+                        'returnFeeType' => $returnOrder->return_fee_type,
+                        'returnFeeValue' => $returnOrder->return_fee ? (float) $returnOrder->return_fee : null,
+                        'orderItems' => $returnOrder->orderItems->map(function ($item) {
+                            return [
+                                'id' => $item->id,
+                                'quantity' => $item->quantity,
+                                'price' => (float) $item->price,
+                                'returnQty' => $item->return_qty,
+                                'book' => [
+                                    'id' => $item->book->id,
+                                    'title' => $item->book->title,
+                                    'author' => $item->book->author,
+                                    'price' => (float) $item->book->price,
+                                ],
+                            ];
+                        })->filter(function ($item) {
+                            return $item['quantity'] > 0;
+                        }),
+                        'totalRefundAmount' => $returnOrder->total_refund_amount ? (float) $returnOrder->total_refund_amount : null,
+                        'createdAt' => $returnOrder->created_at,
+                    ];
+                }),
+                'parentOrderId' => $order->parent_id,
             ];
         });
 
@@ -275,7 +307,7 @@ class OrderController extends Controller
                 $orderItems[] = [
                     'book' => $book,
                     'quantity' => $item['quantity'],
-                    'price' => $book->price,
+                    'price' => $itemTotal,
                     'book_id' => $item['book_id']
                 ];
             }
@@ -296,10 +328,14 @@ class OrderController extends Controller
 
             // Tạo order items và cập nhật stock
             foreach ($orderItems as $item) {
+                $capitalPrice = $item['book']->capital_price ?? 0;
                 $order->orderItems()->create([
                     'book_id'  => $item['book_id'],
                     'quantity' => $item['quantity'],
-                    'price'    => $item['price'],
+                    'price'    => $item['book']->price,
+                    'capital_price' => $capitalPrice,
+                    'total_price' => $item['book']->price * $item['quantity'],
+                    'total_capital_price' => $capitalPrice * $item['quantity'],
                 ]);
 
                 $item['book']->decrement('quantity', $item['quantity']);
@@ -364,10 +400,14 @@ class OrderController extends Controller
                 $totalAmount += $itemTotal;
 
 
+                $capitalPrice = $book->capital_price ?? 0;
                 $order->orderItems()->create([
                     'book_id'  => $item['bookId'],
                     'quantity' => $item['quantity'],
                     'price'    => $book->price,
+                    'capital_price' => $capitalPrice,
+                    'total_price' => $book->price * $item['quantity'],
+                    'total_capital_price' => $capitalPrice * $item['quantity'],
                 ]);
 
                 InventoryHistory::create([
@@ -576,10 +616,14 @@ class OrderController extends Controller
                 foreach ($validatedItems as $cartItem) {
                     $book = $cartItem->book;
 
+                    $capitalPrice = $book->capital_price ?? 0;
                     $order->orderItems()->create([
                         'book_id'  => $cartItem->book_id,
                         'quantity' => $cartItem->quantity,
                         'price'    => $book->price,
+                        'capital_price' => $capitalPrice,
+                        'total_price' => $book->price * $cartItem->quantity,
+                        'total_capital_price' => $capitalPrice * $cartItem->quantity,
                     ]);
 
                     $book->decrement('quantity', $cartItem->quantity);
@@ -697,10 +741,14 @@ class OrderController extends Controller
                 $cartItem = $item['cartItem'];
                 $book = $cartItem->book;
 
+                $capitalPrice = $book->capital_price ?? 0;
                 $order->orderItems()->create([
                     'book_id'  => $cartItem->book_id,
                     'quantity' => $cartItem->quantity,
-                    'price'    => $item['finalPrice'],
+                    'price'    => $book->price, // Sử dụng giá đã tính (có sale_off hoặc giá gốc)
+                    'capital_price' => $capitalPrice,
+                    'total_price' => $item['finalPrice'] * $cartItem->quantity,
+                    'total_capital_price' => $capitalPrice * $cartItem->quantity,
                 ]);
 
                 $book->decrement('quantity', $cartItem->quantity);
@@ -746,6 +794,19 @@ class OrderController extends Controller
                         $currentSold = (int) ($orderItem->book->sold ?? 0);
                         $newSold = max(0, $currentSold - (int) $orderItem->quantity);
                         $orderItem->book->update(['sold' => $newSold]);
+
+                        InventoryHistory::create([
+                            'book_id' => $orderItem->book_id,
+                            'order_id' => $order->id,
+                            'type' => 'IN',
+                            'qty_stock_before' => $orderItem->book->quantity,
+                            'qty_change' => (int) $orderItem->quantity,
+                            'qty_stock_after' => $orderItem->book->quantity + (int) $orderItem->quantity,
+                            'price' => $orderItem->book->price,
+                            'total_price' => $orderItem->book->price * $orderItem->quantity,
+                            'transaction_date' => now(),
+                            'description' => 'Nhập kho do hủy đơn hàng',
+                        ]);
                     }
                 }
             }
@@ -862,5 +923,217 @@ class OrderController extends Controller
         return response($dompdf->output(), 200)
             ->header('Content-Type', 'application/pdf')
             ->header('Content-Disposition', 'inline; filename="order_' . $id . '.pdf"');
+    }
+
+    /**
+     * Return order (Trả hàng)
+     * Converted from Java Spring Boot to Laravel
+     */
+    public function returnOrder($id, ReturnOrderRequest $request)
+    {
+        try {
+            return DB::transaction(function () use ($id, $request) {
+                // Find the original order
+                $order = Order::with(['orderItems', 'customer'])->find($id);
+                if (!$order) {
+                    return $this->errorResponse(404, 'Not Found', 'Order not found');
+                }
+                // Create return order with initial total_amount = 0
+                $returnOrder = new Order();
+                $returnOrder->order_number = $this->generateRefundCode($order);
+                $returnOrder->type = $request->orderType ?? 'RETURN';
+                $returnOrder->customer_id = $request->customerId ?? $order->customer_id;
+                $returnOrder->receiver_email = $request->email;
+                $returnOrder->receiver_name = $request->receiverName;
+                $returnOrder->receiver_address = $request->receiverAddress;
+                $returnOrder->receiver_phone = $request->receiverPhone;
+                $returnOrder->payment_method = $request->paymentMethod;
+                $returnOrder->parent_id = $order->id;
+                $returnOrder->total_amount = 0;
+                $returnOrder->save();
+
+                $totalPrice = 0;
+                $orderItems = [];
+
+                // Process return items and calculate total price
+                if ($request->orderItems && is_array($request->orderItems)) {
+                    foreach ($request->orderItems as $item) {
+                        $book = Book::find($item['bookId']);
+                        if (!$book) {
+                            return $this->errorResponse(404, 'Not Found', 'Sản phẩm không tồn tại');
+                        }
+
+                        if (!isset($item['quantity'])) {
+                            continue;
+                        }
+
+                        // Calculate price for this item and add to total
+                        $itemPrice = $item['quantity'] * $book->price;
+                        $totalPrice += $itemPrice;
+
+                        // Create order item for return order
+                        $orderItem = new OrderItem();
+                        $orderItem->order_id = $returnOrder->id;
+                        $orderItem->book_id = $book->id;
+                        $orderItem->quantity = $item['quantity'];
+                        $orderItem->price = $itemPrice;
+                        $orderItem->save();
+
+                        $orderItems[] = $orderItem;
+
+        
+                        if (isset($item['orderItemId'])) {
+                            $originOrderItem = OrderItem::find($item['orderItemId']);
+                            if ($originOrderItem) {
+                                if (($originOrderItem->return_qty + $item['quantity']) > $originOrderItem->quantity) {
+                                    return $this->errorResponse(
+                                        400,
+                                        'Bad Request',
+                                        'Return quantity exceeds purchased quantity for book ID: ' . $book->id
+                                    );
+                                }
+                                $originOrderItem->return_qty += $item['quantity'];
+                                $originOrderItem->save();
+                            }
+                        }
+
+
+                        InventoryHistory::create([
+                            'book_id' => $book->id,
+                            'order_id' => $order->id,
+                            'type' => 'IN',
+                            'qty_stock_before' => $book->quantity,
+                            'qty_change' => (int) $item['quantity'],
+                            'qty_stock_after' => $book->quantity + $item['quantity'],
+                            'price' => $book->price,
+                            'total_price' => $itemPrice,
+                            'transaction_date' => now(),
+                            'description' => 'Nhập do trả hàng',
+                        ]);
+
+                        // Update book inventory
+                        $book->increment('quantity', $item['quantity']);
+                        if ($book->sold >= $item['quantity']) {
+                            $book->decrement('sold', $item['quantity']);
+                        }
+                    }
+                }
+
+                // Handle promotion refund
+                if ($request->totalPromotionValue && $request->promotionId) {
+                    $promotion = Promotion::find($request->promotionId);
+                    if (!$promotion) {
+                        return $this->errorResponse(404, 'Not Found', 'Promotion not found');
+                    }
+
+                    // Restore promotion quantity limit
+                    if (!is_null($promotion->qty_limit)) {
+                        $promotion->increment('qty_limit', 1);
+                    }
+
+                    $returnOrder->promotion_id = $promotion->id;
+                    $returnOrder->total_promotion_value = $request->totalPromotionValue;
+                    $totalPrice -= $request->totalPromotionValue;
+                }
+
+                if ($request->returnFee) {
+                    $returnOrder->return_fee = $request->returnFee;
+                    $returnOrder->return_fee_type = $request->returnFeeType ?? 'value';
+
+                    if ($request->returnFeeType === 'percent') {
+                        $totalPrice -= ($totalPrice * ($request->returnFee / 100));
+                    } else {
+                        $totalPrice -= $request->returnFee;
+                    }
+                }
+
+
+                $returnOrder->total_refund_amount = $totalPrice;
+
+
+                if ($request->statusId) {
+                    $this->createReturnOrderStatusWithId($returnOrder->id, $request->statusId, 'Return order created');
+                } else {
+                    $this->createReturnOrderStatus($returnOrder->id, 'Return order created');
+                }
+
+                $returnOrder->total_amount = $totalPrice;
+                $returnOrder->save();
+
+                $returnOrder->load(['orderItems.book', 'statusHistories.orderStatus', 'customer']);
+
+                return $this->successResponse(
+                    201,
+                    'Return order created successfully',
+                    $returnOrder
+                );
+            });
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                500,
+                'Error creating return order',
+                $e->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Generate refund code based on parent order
+     * Example: ORDER01012025-TH01, ORDER01012025-TH02
+     */
+    private function generateRefundCode(Order $order)
+    {
+        $parentOrderId = $order->id;
+        $childOrders = Order::where('parent_id', $parentOrderId)->get();
+
+        $refundCount = $childOrders->count() + 1;
+
+        return $order->order_number . '-TH' . str_pad($refundCount, 2, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * Create return order status
+     */
+    private function createReturnOrderStatus($orderId, $note = 'Return order created')
+    {
+        // Find the appropriate status for return orders
+        // You may need to adjust this based on your OrderStatus table
+        $returnStatus = OrderStatus::where('name', 'return')
+            ->orWhere('name', 'returned')
+            ->orWhere('name', 'refund')
+            ->first();
+
+        if (!$returnStatus) {
+            // If no specific return status exists, use the first status
+            $returnStatus = OrderStatus::first();
+        }
+
+        if ($returnStatus) {
+            return OrderStatusHistory::create([
+                'order_id' => $orderId,
+                'order_status_id' => $returnStatus->id,
+                'note' => $note
+            ]);
+        }
+
+        return null;
+    }
+
+    /**
+     * Create return order status with specific status ID
+     */
+    private function createReturnOrderStatusWithId($orderId, $statusId, $note = 'Return order created')
+    {
+        $status = OrderStatus::find($statusId);
+
+        if ($status) {
+            return OrderStatusHistory::create([
+                'order_id' => $orderId,
+                'order_status_id' => $status->id,
+                'note' => $note
+            ]);
+        }
+
+        return null;
     }
 }

@@ -10,12 +10,22 @@ class Book extends Model
         'title',
         'description',
         'price',
+        'capital_price',
         'thumbnail',
         'author',
         'is_active',
         'quantity',
         'sold',
         'sale_off',
+    ];
+
+    protected $casts = [
+        'price' => 'decimal:2',
+        'capital_price' => 'decimal:2',
+        'quantity' => 'integer',
+        'sold' => 'integer',
+        'sale_off' => 'decimal:2',
+        'is_active' => 'boolean',
     ];
 
     public function categories()
