@@ -110,7 +110,20 @@ class ImportReceiptController extends Controller
                     'price' => $price,
                 ]);
                 
-    
+                // Tính giá vốn bình quân gia quyền
+                // Công thức: Giá vốn mới = (Tồn kho cũ * Giá vốn cũ + SL nhập * Giá nhập) / (Tồn kho cũ + SL nhập)
+                $oldQuantity = (float) $book->quantity;
+                $oldCapitalPrice = (float) ($book->capital_price ?? 0);
+                $importQuantity = (float) $detail['quantity'];
+                $importPrice = (float) $price;
+
+                $newQuantity = $oldQuantity + $importQuantity;
+                $newCapitalPrice = 0;
+
+                if ($newQuantity > 0) {
+                    $newCapitalPrice = (($oldQuantity * $oldCapitalPrice) + ($importQuantity * $importPrice)) / $newQuantity;
+                }
+
                 InventoryHistory::create([
                     'book_id' => $book->id,
                     'import_receipt_id' => $importReceipt->id,
@@ -124,8 +137,9 @@ class ImportReceiptController extends Controller
                     'description' => 'Nhập kho - ' . $importReceipt->receipt_number,
                 ]);
 
-                // Cập nhật số lượng sách
+                // Cập nhật số lượng sách và giá vốn
                 $book->increment('quantity', $detail['quantity']);
+                $book->update(['capital_price' => $newCapitalPrice]);
             }
 
             $importReceipt->load('importReceiptDetails.supply.book');

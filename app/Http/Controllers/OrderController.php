@@ -317,10 +317,14 @@ class OrderController extends Controller
 
             // Tạo order items và cập nhật stock
             foreach ($orderItems as $item) {
+                $capitalPrice = $item['book']->capital_price ?? 0;
                 $order->orderItems()->create([
                     'book_id'  => $item['book_id'],
                     'quantity' => $item['quantity'],
-                    'price'    => $item['price'],
+                    'price'    => $item['book']->price,
+                    'capital_price' => $capitalPrice,
+                    'total_price' => $item['book']->price * $item['quantity'],
+                    'total_capital_price' => $capitalPrice * $item['quantity'],
                 ]);
 
                 $item['book']->decrement('quantity', $item['quantity']);
@@ -385,10 +389,14 @@ class OrderController extends Controller
                 $totalAmount += $itemTotal;
 
 
+                $capitalPrice = $book->capital_price ?? 0;
                 $order->orderItems()->create([
                     'book_id'  => $item['bookId'],
                     'quantity' => $item['quantity'],
-                    'price'    => $itemTotal,
+                    'price'    => $book->price,
+                    'capital_price' => $capitalPrice,
+                    'total_price' => $book->price * $item['quantity'],
+                    'total_capital_price' => $capitalPrice * $item['quantity'],
                 ]);
 
                 InventoryHistory::create([
@@ -597,10 +605,14 @@ class OrderController extends Controller
                 foreach ($validatedItems as $cartItem) {
                     $book = $cartItem->book;
 
+                    $capitalPrice = $book->capital_price ?? 0;
                     $order->orderItems()->create([
                         'book_id'  => $cartItem->book_id,
                         'quantity' => $cartItem->quantity,
                         'price'    => $book->price,
+                        'capital_price' => $capitalPrice,
+                        'total_price' => $book->price * $cartItem->quantity,
+                        'total_capital_price' => $capitalPrice * $cartItem->quantity,
                     ]);
 
                     $book->decrement('quantity', $cartItem->quantity);
@@ -724,10 +736,14 @@ class OrderController extends Controller
                 $cartItem = $item['cartItem'];
                 $book = $cartItem->book;
 
+                $capitalPrice = $book->capital_price ?? 0;
                 $order->orderItems()->create([
                     'book_id'  => $cartItem->book_id,
                     'quantity' => $cartItem->quantity,
-                    'price'    => $item['finalPrice'], // Sử dụng giá đã tính (có sale_off hoặc giá gốc)
+                    'price'    => $book->price, // Sử dụng giá đã tính (có sale_off hoặc giá gốc)
+                    'capital_price' => $capitalPrice,
+                    'total_price' => $item['finalPrice'] * $cartItem->quantity,
+                    'total_capital_price' => $capitalPrice * $cartItem->quantity,
                 ]);
 
                 $book->decrement('quantity', $cartItem->quantity);

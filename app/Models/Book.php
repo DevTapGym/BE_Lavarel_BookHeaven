@@ -10,6 +10,7 @@ class Book extends Model
         'title',
         'description',
         'price',
+        'capital_price',
         'thumbnail',
         'author',
         'is_active',
@@ -20,6 +21,7 @@ class Book extends Model
 
     protected $casts = [
         'price' => 'decimal:2',
+        'capital_price' => 'decimal:2',
         'quantity' => 'integer',
         'sold' => 'integer',
         'sale_off' => 'decimal:2',
