@@ -18,7 +18,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_1_20251008_162405.jpg',
                 'is_active' => true,
                 'quantity' => 100,
-                'sold' => 50,
+                'sold' => 150,
                 'sale_off' => 10,
             ],
             [
@@ -28,7 +28,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_2_20251008_132354.webp',
                 'is_active' => true,
                 'quantity' => 80,
-                'sold' => 40,
+                'sold' => 140,
                 'sale_off' => 5,
             ],
             [
@@ -38,7 +38,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_3_20251008_131507.jpeg',
                 'is_active' => true,
                 'quantity' => 70,
-                'sold' => 30,
+                'sold' => 430,
                 'sale_off' => 0,
             ],
             [
@@ -48,7 +48,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_4_20251008_132500.webp',
                 'is_active' => true,
                 'quantity' => 60,
-                'sold' => 25,
+                'sold' => 75,
                 'sale_off' => 0,
             ],
             [
@@ -58,7 +58,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_5_20251008_162224.jpg',
                 'is_active' => true,
                 'quantity' => 90,
-                'sold' => 35,
+                'sold' => 135,
                 'sale_off' => 10,
             ],
             [
@@ -68,7 +68,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_6_20251008_135828.webp',
                 'is_active' => true,
                 'quantity' => 70,
-                'sold' => 20,
+                'sold' => 120,
                 'sale_off' => 5,
             ],
             [
@@ -78,7 +78,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_7_20251008_131932.jpg',
                 'is_active' => true,
                 'quantity' => 50,
-                'sold' => 15,
+                'sold' => 115,
                 'sale_off' => 0,
             ],
             [
@@ -88,7 +88,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_8_20251008_132819.webp',
                 'is_active' => true,
                 'quantity' => 60,
-                'sold' => 30,
+                'sold' => 330,
                 'sale_off' => 0,
             ],
             [
@@ -98,7 +98,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_9_20251008_101102.webp',
                 'is_active' => true,
                 'quantity' => 40,
-                'sold' => 20,
+                'sold' => 620,
                 'sale_off' => 20,
             ],
             [
@@ -108,19 +108,17 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_10_20251008_140531.webp',
                 'is_active' => true,
                 'quantity' => 30,
-                'sold' => 10,
+                'sold' => 110,
                 'sale_off' => 0,
             ],
             [
-
-
                 'title' => 'Lối Sống Tối Giản Của Người Nhật',
                 'author' => 'Fumio Sasaki',
                 'price' => 120000,
                 'thumbnail' => '/storage/BookImages/Thumbnail_11_20251008_135938.webp',
                 'is_active' => true,
                 'quantity' => 60,
-                'sold' => 20,
+                'sold' => 120,
                 'sale_off' => 0,
             ],
             [
@@ -130,7 +128,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_12_20251008_135650.webp',
                 'is_active' => true,
                 'quantity' => 50,
-                'sold' => 25,
+                'sold' => 245,
                 'sale_off' => 5,
             ],
             [
@@ -140,7 +138,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_13_20251008_141716.webp',
                 'is_active' => true,
                 'quantity' => 40,
-                'sold' => 10,
+                'sold' => 660,
                 'sale_off' => 0,
             ],
             [
@@ -150,7 +148,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_14_20251008_140252.jpg',
                 'is_active' => true,
                 'quantity' => 50,
-                'sold' => 15,
+                'sold' => 125,
                 'sale_off' => 0,
             ],
             [
@@ -160,7 +158,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_15_20251008_141514.webp',
                 'is_active' => true,
                 'quantity' => 40,
-                'sold' => 20,
+                'sold' => 120,
                 'sale_off' => 0,
             ],
             [
@@ -170,7 +168,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_16_20251008_141347.webp',
                 'is_active' => true,
                 'quantity' => 30,
-                'sold' => 10,
+                'sold' => 120,
                 'sale_off' => 0,
             ],
             [
@@ -180,7 +178,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_17_20251008_135545.webp',
                 'is_active' => true,
                 'quantity' => 60,
-                'sold' => 30,
+                'sold' => 360,
                 'sale_off' => 5,
             ],
             [
@@ -190,7 +188,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_18_20251008_141245.webp',
                 'is_active' => true,
                 'quantity' => 50,
-                'sold' => 20,
+                'sold' => 260,
                 'sale_off' => 0,
             ],
             [
@@ -200,7 +198,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_19_20251008_140423.webp',
                 'is_active' => true,
                 'quantity' => 40,
-                'sold' => 15,
+                'sold' => 115,
                 'sale_off' => 0,
             ],
             [
@@ -210,7 +208,7 @@ class BookSeeder extends Seeder
                 'thumbnail' => '/storage/BookImages/Thumbnail_20_20251008_132638.webp',
                 'is_active' => true,
                 'quantity' => 100,
-                'sold' => 50,
+                'sold' => 150,
                 'sale_off' => 0,
             ],
         ];

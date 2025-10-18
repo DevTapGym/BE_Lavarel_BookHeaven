@@ -237,6 +237,14 @@ class OrderController extends Controller
     {
         return DB::transaction(function () use ($request) {
             $orderNumber = $this->generateOrderNumber();
+            $user = Auth::user();
+            if (!$user || !$user->customer_id) {
+                return $this->errorResponse(
+                    404,
+                    'Not Found',
+                    'User not found or user is not a customer'
+                );
+            }
 
             // Tính tổng tiền dựa trên các item thực tế
             $totalAmount = 0;
@@ -275,10 +283,13 @@ class OrderController extends Controller
             $orderData = [
                 'order_number'        => $orderNumber,
                 'total_amount'        => $totalAmount,
+                'customer_id'           => $user->customer_id,
                 'note'                => $request->note,
-                'shipping_fee'        => $request->shipping_fee ?? 0,
-                'shipping_address_id' => $request->shipping_address_id,
-                'payment_method_id'   => $request->payment_method_id,
+                'shipping_fee'        => 30000,
+                'payment_method'        => $request->payment_method,
+                'receiver_name'         => $request->name,
+                'receiver_address'      => $request->address,
+                'receiver_phone'        => $request->phone,
             ];
 
             $order = Order::create($orderData);
@@ -298,7 +309,7 @@ class OrderController extends Controller
             // Tạo trạng thái đơn hàng ban đầu
             $this->createInitialOrderStatus($order->id, 'Order created successfully');
 
-            $order->load(['orderItems.book', 'shippingAddress', 'paymentMethod', 'statusHistories.orderStatus']);
+            $order->load(['orderItems.book', 'statusHistories.orderStatus']);
 
             return $this->successResponse(
                 201,
@@ -656,18 +667,12 @@ class OrderController extends Controller
                     );
                 }
 
-                // Tính giá: nếu có sale_off thì dùng giá sale, không thì dùng giá gốc
-                $finalPrice = $book->price;
-                if (!is_null($book->sale_off) && $book->sale_off > 0) {
-                    $finalPrice = $book->price * ($book->sale_off / 100);
-                }
-
-                $itemTotal = $finalPrice * $cartItem->quantity;
+                $itemTotal = $book->price * $cartItem->quantity;
                 $totalAmount += $itemTotal;
 
                 $validatedItems[] = [
                     'cartItem' => $cartItem,
-                    'finalPrice' => $finalPrice
+                    'finalPrice' => $book->price
                 ];
             }
 
@@ -695,7 +700,7 @@ class OrderController extends Controller
                 $order->orderItems()->create([
                     'book_id'  => $cartItem->book_id,
                     'quantity' => $cartItem->quantity,
-                    'price'    => $item['finalPrice'], // Sử dụng giá đã tính (có sale_off hoặc giá gốc)
+                    'price'    => $item['finalPrice'],
                 ]);
 
                 $book->decrement('quantity', $cartItem->quantity);

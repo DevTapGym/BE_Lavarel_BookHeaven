@@ -27,6 +27,8 @@ class Order extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'total_amount' => 'float',
+        'shipping_fee' => 'float',
     ];
 
     public function getCreatedAtAttribute($value)
