@@ -13,6 +13,7 @@ use App\Models\Book;
  * @property string $address
  * @property string $name
  * @property array $items
+ * @property int|null $promotion_id
  */
 class OrderRequest extends FormRequest
 {
@@ -30,6 +31,7 @@ class OrderRequest extends FormRequest
             'phone'                => 'required|string|max:20',
             'address'              => 'required|string|max:500',
             'name'                 => 'required|string|max:255',
+            'promotion_id'         => 'nullable|exists:promotions,id',
 
             // Order items
             'items'                => 'required|array|min:1',
