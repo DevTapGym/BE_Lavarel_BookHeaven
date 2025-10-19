@@ -14,6 +14,7 @@ use App\Models\Book;
  * @property string $phone
  * @property string $address
  * @property string $name
+ * @property int|null $promotion_id
  */
 class PlaceOrderRequest extends FormRequest
 {
@@ -31,6 +32,7 @@ class PlaceOrderRequest extends FormRequest
             'phone'                => 'required|string|max:20',
             'address'              => 'required|string|max:500',
             'name'                 => 'required|string|max:255',
+            'promotion_id'         => 'nullable|exists:promotions,id',
         ];
     }
 
