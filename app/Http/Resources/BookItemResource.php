@@ -15,6 +15,7 @@ class BookItemResource extends JsonResource
             'thumbnail' => $this->thumbnail,
             'mainText' => $this->title,
             'author' => $this->author,
+            'capitalPrice' => $this->capital_price,
             'price' => $this->price,
             'sold' => $this->sold,
             'quantity' => $this->quantity,
