@@ -44,6 +44,7 @@ Route::prefix('/v1')->group(function () {
     });
 
     Route::prefix('/book')->group(function () {
+        Route::get('/sold', [BookController::class, 'getSoldBooksByDateRange'])->name('get.sold.books.by.date.range');
         Route::get('/booksNoPagination', [BookController::class, 'getAllBooks'])->name('get.all.books.no.pagination');
         Route::get('/', [BookController::class, 'indexPaginated']);
         Route::get('/books', [BookController::class, 'indexPaginatedForWeb']);
@@ -90,7 +91,9 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
     Route::prefix('/upload')->group(function () {
         Route::post('/avatar', [UploadController::class, 'uploadAvatar'])->name('upload.avatar');
         Route::post('/book-image', [UploadController::class, 'uploadImageBook'])->name('upload.book.image');
+        Route::post('/book-image/web', [UploadController::class, 'uploadImageBook'])->name('upload.book.image.for.web');
         Route::post('/thumbnail', [UploadController::class, 'uploadThumbnailBook'])->name('upload.thumbnail.book');
+        Route::post('/thumbnail/web', [UploadController::class, 'uploadThumbnailForWeb'])->name('upload.thumbnail.book.for.web');
         Route::post('/logo-payment', [UploadController::class, 'uploadLogoPaymentMethod'])->name('upload.logo.payment.method');
     });
 

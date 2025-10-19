@@ -55,8 +55,8 @@ class OrderController extends Controller
             'promotion',
             'customer'
         ])
-        ->orderBy('created_at', 'desc')
-        ->paginate($pageSize);
+            ->orderBy('created_at', 'desc')
+            ->paginate($pageSize);
 
         $transformed = $paginator->getCollection()->map(function ($order) {
             return [
@@ -206,9 +206,11 @@ class OrderController extends Controller
         }
 
         $orders = Order::where('customer_id', $user->customer_id)
+            ->where('type', 'SALE')
             ->with([
                 'orderItems.book',
-                'statusHistories.orderStatus'
+                'statusHistories.orderStatus',
+                'returnOrders' // Eager load return orders để kiểm tra has_return
             ])
             ->orderBy('created_at', 'desc')
             ->paginate($pageSize);
@@ -981,7 +983,7 @@ class OrderController extends Controller
 
                         $orderItems[] = $orderItem;
 
-        
+
                         if (isset($item['orderItemId'])) {
                             $originOrderItem = OrderItem::find($item['orderItemId']);
                             if ($originOrderItem) {
