@@ -29,6 +29,7 @@ class Promotion extends Model
     ];
 
     protected $casts = [
+        "status" => 'boolean',
         'promotion_value' => 'decimal:2',
         'max_promotion_value' => 'decimal:2',
         'order_min_value' => 'decimal:2',
@@ -46,5 +47,3 @@ class Promotion extends Model
         return $this->hasMany(Order::class);
     }
 }
-
-
