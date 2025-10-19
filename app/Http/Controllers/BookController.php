@@ -42,6 +42,7 @@ class BookController extends Controller
                     // Lọc theo tên sách (title)
                     AllowedFilter::partial('title'),
                     AllowedFilter::partial('mainText', 'title'),
+                    AllowedFilter::partial('author'),
 
                     // Lọc theo tên thể loại
                     AllowedFilter::callback('category', function ($query, $value) {
@@ -68,12 +69,15 @@ class BookController extends Controller
                     }),
                 ])
                 ->allowedSorts([
-                    'sold',           // sold,desc
-                    'created_at',     // created_at,desc
-                    'price',          // price,asc hoặc price,desc
-                    'title',          // title,asc hoặc title,desc
+                    'sold',
+                    'created_at',
+                    'quantity',
+                    'updated_at',
+                    'price',
+                    'title',
+                    'author',
                 ])
-                ->defaultSort('-sold') // Mặc định sort theo updated_at giảm dần
+                ->defaultSort('-sold') // Mặc định sort
                 ->with(['categories', 'bookImages'])
                 ->paginate($pageSize, ['*'], 'page', $page);
 
@@ -256,18 +260,44 @@ class BookController extends Controller
                 'author'         => 'required|string|max:255',
                 'price'          => 'required|numeric|min:0',
                 'description'    => 'nullable|string',
-                'thumbnail'      => 'nullable|url',
+                'thumbnail'      => 'nullable|string',
                 'is_active'      => 'sometimes|boolean',
                 'quantity'       => 'sometimes|integer|min:0',
                 'sold'           => 'sometimes|integer|min:0',
+                'category_id'    => 'sometimes|integer|exists:categories,id',
                 'sale_off'       => 'sometimes|numeric|min:0',
+                'bookImages'     => 'sometimes|array',
+                'bookImages.*.url'   => 'string',
             ]);
-            $book = Book::create($validated);
-            return $this->successResponse(
-                201,
-                'Book created successfully',
-                $book
-            );
+
+            return DB::transaction(function () use ($validated) {
+                // Tạo book (loại bỏ category_id và bookImages khỏi dữ liệu tạo book)
+                $bookData = collect($validated)->except(['category_id', 'bookImages'])->toArray();
+                $book = Book::create($bookData);
+
+                // Attach category nếu có
+                if (isset($validated['category_id'])) {
+                    $book->categories()->attach($validated['category_id']);
+                }
+
+                // Tạo book images nếu có
+                if (isset($validated['bookImages']) && is_array($validated['bookImages'])) {
+                    foreach ($validated['bookImages'] as $imageUrl) {
+                        $book->bookImages()->create([
+                            'url' => $imageUrl['url'],
+                        ]);
+                    }
+                }
+
+                // Load categories và bookImages để trả về
+                $book->load(['categories', 'bookImages']);
+
+                return $this->successResponse(
+                    201,
+                    'Book created successfully',
+                    $book
+                );
+            });
         } catch (Throwable $th) {
             return $this->errorResponse(
                 500,
@@ -282,26 +312,45 @@ class BookController extends Controller
         try {
             $validated = $request->validate([
                 'id'             => 'required|exists:books,id',
-                'title'          => 'sometimes|required|string|max:255',
-                'author'         => 'sometimes|required|string|max:255',
-                'price'          => 'sometimes|required|numeric|min:0',
+                'title'          => 'sometimes|string|max:255',
+                'author'         => 'sometimes|string|max:255',
+                'price'          => 'sometimes|numeric|min:0',
                 'description'    => 'nullable|string',
-                'thumbnail'      => 'nullable|url',
+                'thumbnail'      => 'nullable|string',
                 'is_active'      => 'sometimes|boolean',
                 'quantity'       => 'sometimes|integer|min:0',
                 'sold'           => 'sometimes|integer|min:0',
                 'sale_off'       => 'sometimes|numeric|min:0',
+                'category_id'    => 'sometimes|integer|exists:categories,id',
+                'bookImages'     => 'sometimes|array',
+                'bookImages.*.url' => 'required|string',
             ]);
 
             DB::transaction(function () use ($validated) {
                 $book = Book::findOrFail($validated['id']);
-                $book->update($validated);
 
+                // Cập nhật thông tin cơ bản
+                $book->update(collect($validated)->except(['category_id', 'bookImages'])->toArray());
+
+                // Cập nhật category nếu có
+                if (isset($validated['category_id'])) {
+                    $book->categories()->sync([$validated['category_id']]);
+                }
+
+                // Cập nhật ảnh nếu có
+                if (isset($validated['bookImages'])) {
+                    $book->bookImages()->delete();
+                    foreach ($validated['bookImages'] as $imageData) {
+                        $book->bookImages()->create(['url' => $imageData['url']]);
+                    }
+                }
+
+                // Nếu thay đổi giá hoặc trạng thái => cập nhật lại giỏ hàng
                 if (isset($validated['price']) || isset($validated['is_active'])) {
                     $cartItems = $book->cartItems()->get();
 
                     foreach ($cartItems as $item) {
-                        $item->price = ($book->is_active) ? ($book->price * $item->quantity) : 0;
+                        $item->price = $book->is_active ? ($book->price * $item->quantity) : 0;
                         $item->save();
 
                         $cart = $item->cart;
@@ -311,10 +360,12 @@ class BookController extends Controller
                 }
             });
 
+            $updatedBook = Book::with(['categories', 'bookImages'])->findOrFail($validated['id']);
+
             return $this->successResponse(
                 200,
                 'Book updated successfully',
-                Book::findOrFail($validated['id'])
+                $updatedBook
             );
         } catch (Throwable $th) {
             return $this->errorResponse(
@@ -325,23 +376,20 @@ class BookController extends Controller
         }
     }
 
+
     public function destroy(Book $book)
     {
         try {
+            $book->categories()->detach();
+            $book->bookImages()->delete();
             $book->delete();
-            return $this->successResponse(
-                200,
-                'Book deleted successfully',
-                null
-            );
+
+            return $this->successResponse(200, 'Book deleted successfully', null);
         } catch (Throwable $th) {
-            return $this->errorResponse(
-                500,
-                'Error deleting book',
-                $th->getMessage()
-            );
+            return $this->errorResponse(500, 'Error deleting book', $th->getMessage());
         }
     }
+
 
     public function attachCategories(Request $request)
     {
@@ -471,5 +519,40 @@ class BookController extends Controller
                 $th->getMessage()
             );
         }
+    }
+
+    /**
+     * Lấy tất cả sách đã bán trong khoảng thời gian
+     * GET /api/v1/sold-books?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD HH:mm:ss
+     */
+    public function getSoldBooksByDateRange(Request $request)
+    {
+        $startDate = $request->query('startDate');
+        $endDate = $request->query('endDate');
+
+        if (!$startDate || !$endDate) {
+            return $this->errorResponse(400, 'Bad Request', 'Missing startDate or endDate');
+        }
+
+        // Lấy danh sách sách và số lượng đã bán trong khoảng thời gian
+        $orderItems = DB::table('order_items')
+            ->join('orders', 'order_items.order_id', '=', 'orders.id')
+            ->join('books', 'order_items.book_id', '=', 'books.id')
+            ->whereBetween('orders.created_at', [$startDate, $endDate])
+            ->select(
+                'books.id as bookID',
+                'books.title as bookName',
+                DB::raw('SUM(order_items.quantity) as totalQuantity')
+            )
+            ->groupBy('books.id', 'books.title')
+            ->orderByDesc('totalQuantity')
+            ->get();
+
+        // Trả về dữ liệu gọn gàng đúng format frontend cần
+        return $this->successResponse(
+            200,
+            'Sold books retrieved successfully',
+            $orderItems
+        );
     }
 }

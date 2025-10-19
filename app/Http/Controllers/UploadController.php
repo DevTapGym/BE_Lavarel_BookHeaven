@@ -116,6 +116,44 @@ class UploadController extends Controller
         }
     }
 
+    public function uploadThumbnailForWeb(Request $request)
+    {
+        try {
+            $request->validate([
+                'image' => 'required|file|mimes:jpg,jpeg,png,webp|max:5120',
+            ]);
+
+            $file = $request->file('image');
+            $extension = $file->getClientOriginalExtension();
+
+            $fileName = 'Thumbnail' . now()->format('Ymd_His') . '.' . $extension;
+
+            $path = $file->storeAs('BookImages', $fileName, 'public');
+            $url = Storage::url($path);
+
+            return $this->successResponse(
+                200,
+                'Upload image successful and book thumbnail updated',
+                [
+                    'path' => $path,
+                    'url' => $url
+                ]
+            );
+        } catch (ModelNotFoundException $e) {
+            return $this->errorResponse(
+                404,
+                'Book not found',
+                'The specified book does not exist.'
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                500,
+                'Internal Server Error',
+                $e->getMessage(),
+            );
+        }
+    }
+
     public function uploadImageBook(Request $request)
     {
         try {

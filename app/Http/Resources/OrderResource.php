@@ -25,6 +25,19 @@ class OrderResource extends JsonResource
             'receiver_name' => $this->receiver_name,
             'receiver_address' => $this->receiver_address,
             'receiver_phone' => $this->receiver_phone,
+            'customer_id' => $this->customer_id,
+            'receiver_email' => $this->receiver_email,
+            'promotion_id' => $this->promotion_id,
+            'order_type' => $this->order_type,
+            'total_promotion_value' => $this->total_promotion_value,
+
+            // Kiểm tra đã trả hàng hay chưa
+            'has_return' => $this->whenLoaded('returnOrders', function () {
+                return $this->returnOrders->isNotEmpty();
+            }, function () {
+                // Nếu không load returnOrders, kiểm tra trực tiếp
+                return \App\Models\Order::where('parent_id', $this->id)->exists();
+            }),
 
             // Order Items
             'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),

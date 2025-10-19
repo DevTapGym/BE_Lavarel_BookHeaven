@@ -4,6 +4,23 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * @property string|null $note
+ * @property string $paymentMethod
+ * @property string $receiverPhone
+ * @property string $receiverAddress
+ * @property string $receiverName
+ * @property array $email
+ * @property int|null $customerId
+ * @property int|null $promotionId
+ * @property float|null $totalPrice
+ * @property string|null $orderType
+ * @property float|null $totalPromotionValue
+ * @property int|null $statusId
+ * @property float|null $returnFee
+ * @property string|null $returnFeeType
+ * @property array|null $orderItems
+ */
 class ReturnOrderRequest extends FormRequest
 {
     /**

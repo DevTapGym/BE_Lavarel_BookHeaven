@@ -29,6 +29,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'upload avatar', 'guard_name' => 'api', 'apiPath' => '/v1/upload/avatar', 'method' => 'POST', 'module' => 'Upload'],
             ['name' => 'upload book image', 'guard_name' => 'api', 'apiPath' => '/v1/upload/book-image', 'method' => 'POST', 'module' => 'Upload'],
             ['name' => 'upload thumbnail book', 'guard_name' => 'api', 'apiPath' => '/v1/upload/thumbnail', 'method' => 'POST', 'module' => 'Upload'],
+            ['name' => 'upload thumbnail book for web', 'guard_name' => 'api', 'apiPath' => '/v1/upload/thumbnail/web', 'method' => 'POST', 'module' => 'Upload'],
             ['name' => 'upload logo payment method', 'guard_name' => 'api', 'apiPath' => '/v1/upload/logo-payment', 'method' => 'POST', 'module' => 'Upload'],
 
             ['name' => 'view customers', 'guard_name' => 'api', 'apiPath' => '/v1/customer', 'method' => 'GET', 'module' => 'Customer'],
