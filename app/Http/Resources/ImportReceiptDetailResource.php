@@ -11,11 +11,21 @@ class ImportReceiptDetailResource extends JsonResource
     {
         return [
             'quantity'     => $this->quantity,
-            'total_price'  => $this->total_price,
-            'supplier_name' => $this->supply->supplier->name ?? null,
-            'unitPrice' => $this->supply->supply_price ?? null,
-            'bookId'    => $this->supply->book->id ?? null,
-            'bookTitle'    => $this->supply->book->title ?? null,
+            'totalPrice'  => $this->quantity * $this->supply->supply_price,
+            'supply' => [
+                'id' => $this->supply->id,
+                'supplyPrice' => $this->supply->supply_price,
+                'quantity' => $this->supply->quantity,
+                'totalPrice' => $this->supply->total_price,
+                'book' => [
+                    'id' => $this->supply->book->id,
+                    'title' => $this->supply->book->title,
+                ],
+                'supplier' => [
+                    'id' => $this->supply->supplier->id,
+                    'name' => $this->supply->supplier->name,
+                ],
+            ],
         ];
     }
 }

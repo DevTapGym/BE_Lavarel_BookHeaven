@@ -24,7 +24,7 @@ class ImportReceiptResource extends JsonResource
                 'name' => $this->employee->name,
             ],
 
-            'receiptDetails' => ImportReceiptDetailResource::collection($this->importReceiptDetails),
+            'importReceiptDetails' => ImportReceiptDetailResource::collection($this->importReceiptDetails),
         ];
     }
 }
