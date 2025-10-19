@@ -285,6 +285,7 @@ class OrderController extends Controller
             $totalAmount = 0;
             $orderItems = [];
 
+            // Validate items trước
             foreach ($request->items as $item) {
                 $book = Book::find($item['book_id']);
 
@@ -315,6 +316,57 @@ class OrderController extends Controller
                 ];
             }
 
+            // Validate promotion trước khi tạo order
+            $promotion = null;
+            $totalPromotionValue = 0;
+            if ($request->promotion_id) {
+                $promotion = Promotion::find($request->promotion_id);
+
+                if (!$promotion) {
+                    return $this->errorResponse(404, 'Not Found', 'Promotion not found');
+                }
+
+                if ($promotion->status == '0') {
+                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
+                }
+
+                if (!is_null($promotion->order_min_value) && $totalAmount < (float) $promotion->order_min_value) {
+                    return $this->errorResponse(400, 'Bad Request', 'Đơn hàng chưa đạt giá trị tối thiểu để sử dụng mã khuyến mãi');
+                }
+
+                $now = now();
+                if (($promotion->start_date && $now->lt($promotion->start_date)) || ($promotion->end_date && $now->gt($promotion->end_date))) {
+                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
+                }
+
+                if (!is_null($promotion->qty_limit) && (int) $promotion->qty_limit <= 0) {
+                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi đã hết lượt sử dụng');
+                }
+
+                if ($promotion->is_once_per_customer && $user->customer_id) {
+                    $usedBefore = Order::where('promotion_id', $promotion->id)
+                        ->where('customer_id', $user->customer_id)
+                        ->exists();
+                    if ($usedBefore) {
+                        return $this->errorResponse(400, 'Bad Request', 'Khách hàng đã sử dụng mã khuyến mãi này');
+                    }
+                }
+
+                // Tính giá trị khuyến mãi
+                if ($promotion->promotion_type === 'percent') {
+                    $totalPromotionValue = $totalAmount * ((float) $promotion->promotion_value / 100);
+                    if ($promotion->is_max_promotion_value && !is_null($promotion->max_promotion_value)) {
+                        $totalPromotionValue = min($totalPromotionValue, (float) $promotion->max_promotion_value);
+                    }
+                } else {
+                    $totalPromotionValue = (float) $promotion->promotion_value;
+                }
+
+                $totalPromotionValue = max(0, min($totalPromotionValue, $totalAmount));
+                // Giảm tổng tiền sau khi áp dụng khuyến mãi
+                $totalAmount -= $totalPromotionValue;
+            }
+
             $orderData = [
                 'order_number'        => $orderNumber,
                 'total_amount'        => $totalAmount,
@@ -325,6 +377,8 @@ class OrderController extends Controller
                 'receiver_name'         => $request->name,
                 'receiver_address'      => $request->address,
                 'receiver_phone'        => $request->phone,
+                'promotion_id'        => $promotion ? $promotion->id : null,
+                'total_promotion_value' => $totalPromotionValue,
             ];
 
             $order = Order::create($orderData);
@@ -361,67 +415,10 @@ class OrderController extends Controller
                 $book->increment('sold', $item['quantity']);
             }
 
-            // Xử lý khuyến mãi
-            $totalPromotionValue = 0;
-            if ($request->promotion_id) {
-                $promotion = Promotion::find($request->promotion_id);
-
-                if (!$promotion) {
-                    return $this->errorResponse(404, 'Not Found', 'Promotion not found');
-                }
-
-                if ($promotion->status == '0') {
-                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
-                }
-
-                if (!is_null($promotion->order_min_value) && $totalAmount < (float) $promotion->order_min_value) {
-                    return $this->errorResponse(400, 'Bad Request', 'Đơn hàng chưa đạt giá trị tối thiểu để sử dụng mã khuyến mãi');
-                }
-
-                $now = now();
-                if (($promotion->start_date && $now->lt($promotion->start_date)) || ($promotion->end_date && $now->gt($promotion->end_date))) {
-                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
-                }
-
-                if (!is_null($promotion->qty_limit) && (int) $promotion->qty_limit <= 0) {
-                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi đã hết lượt sử dụng');
-                }
-
-                if ($promotion->is_once_per_customer && $user->customer_id) {
-                    $usedBefore = Order::where('promotion_id', $promotion->id)
-                        ->where('customer_id', $user->customer_id)
-                        ->exists();
-                    if ($usedBefore) {
-                        return $this->errorResponse(400, 'Bad Request', 'Khách hàng đã sử dụng mã khuyến mãi này');
-                    }
-                }
-
-                if ($promotion->promotion_type === 'percent') {
-                    $totalPromotionValue = $totalAmount * ((float) $promotion->promotion_value / 100);
-                    if ($promotion->is_max_promotion_value && !is_null($promotion->max_promotion_value)) {
-                        $totalPromotionValue = min($totalPromotionValue, (float) $promotion->max_promotion_value);
-                    }
-                } else {
-                    $totalPromotionValue = (float) $promotion->promotion_value;
-                }
-
-                $totalPromotionValue = max(0, min($totalPromotionValue, $totalAmount));
-                if (!is_null($promotion->qty_limit)) {
-                    $promotion->decrement('qty_limit');
-                }
-
-                $order->promotion_id = $promotion->id;
-                $order->total_promotion_value = $totalPromotionValue;
-
-                // Reduce total by discount
-                $totalAmount -= $totalPromotionValue;
+            // Decrement promotion qty_limit sau khi tạo order thành công
+            if ($promotion && !is_null($promotion->qty_limit)) {
+                $promotion->decrement('qty_limit');
             }
-
-            $order->update([
-                'total_amount' => $totalAmount,
-                'promotion_id' => $order->promotion_id ?? null,
-                'total_promotion_value' => $order->total_promotion_value ?? 0,
-            ]);
 
             // Tạo trạng thái đơn hàng ban đầu
             $this->createInitialOrderStatus($order->id, 'Order created successfully');
@@ -439,23 +436,14 @@ class OrderController extends Controller
     public function createOrderFromWebPayload(OrderWebRequest $request)
     {
         return DB::transaction(function () use ($request) {
-            $orderNumber = $this->generateOrderNumber();
-
             $customer = Customer::find($request->customerId);
             if (!$customer) {
                 return $this->errorResponse(404, 'Not Found', 'Customer not found');
             }
 
-            $order = Order::create([
-                'order_number'        => $orderNumber,
-                'total_amount'        => 0,
-                'note'                => null,
-                'shipping_fee'        => 0,
-                'payment_method'      => $request->paymentMethod,
-                'customer_id'         => $request->customerId,
-            ]);
-
+            // Validate items và tính tổng tiền TRƯỚC
             $totalAmount = 0;
+            $validatedItems = [];
 
             foreach ($request->orderItems as $item) {
                 $book = Book::find($item['bookId']);
@@ -476,38 +464,19 @@ class OrderController extends Controller
                     );
                 }
 
-
                 $itemTotal = $book->price * $item['quantity'];
                 $totalAmount += $itemTotal;
 
-
-                $capitalPrice = $book->capital_price ?? 0;
-                $order->orderItems()->create([
-                    'book_id'  => $item['bookId'],
+                $validatedItems[] = [
+                    'book' => $book,
+                    'bookId' => $item['bookId'],
                     'quantity' => $item['quantity'],
-                    'price'    => $book->price,
-                    'capital_price' => $capitalPrice,
-                    'total_price' => $book->price * $item['quantity'],
-                    'total_capital_price' => $capitalPrice * $item['quantity'],
-                ]);
-
-                InventoryHistory::create([
-                    'book_id'          => $book->id,
-                    'order_id'         => $order->id,
-                    'type'             => 'OUT',
-                    'qty_stock_before' => $book->quantity,
-                    'qty_change'       => (int) $item['quantity'],
-                    'qty_stock_after'  => $book->quantity - (int) $item['quantity'],
-                    'price'            => $book->price,
-                    'total_price'      => $itemTotal,
-                    'transaction_date' => now(),
-                    'description'      => 'Xuất kho do bán hàng',
-                ]);
-
-                $book->decrement('quantity', $item['quantity']);
-                $book->increment('sold', $item['quantity']);
+                    'itemTotal' => $itemTotal
+                ];
             }
 
+            // Validate promotion TRƯỚC khi tạo order
+            $promotion = null;
             $totalPromotionValue = 0;
             if ($request->promotionId) {
                 $promotion = Promotion::find($request->promotionId);
@@ -529,7 +498,6 @@ class OrderController extends Controller
                     return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
                 }
 
-
                 if (!is_null($promotion->qty_limit) && (int) $promotion->qty_limit <= 0) {
                     return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi đã hết lượt sử dụng');
                 }
@@ -543,6 +511,7 @@ class OrderController extends Controller
                     }
                 }
 
+                // Tính giá trị khuyến mãi
                 if ($promotion->promotion_type === 'percent') {
                     $totalPromotionValue = $totalAmount * ((float) $promotion->promotion_value / 100);
                     if ($promotion->is_max_promotion_value && !is_null($promotion->max_promotion_value)) {
@@ -553,32 +522,66 @@ class OrderController extends Controller
                 }
 
                 $totalPromotionValue = max(0, min($totalPromotionValue, $totalAmount));
-                if (!is_null($promotion->qty_limit)) {
-                    $promotion->decrement('qty_limit');
-                }
-
-
-                $order->promotion_id = $promotion->id;
-                $order->total_promotion_value = $totalPromotionValue;
-
-                // Reduce total by discount
+                // Giảm tổng tiền sau khi áp dụng khuyến mãi
                 $totalAmount -= $totalPromotionValue;
             }
 
-            $order->update([
-                'total_amount' => $totalAmount,
-                'promotion_id' => $order->promotion_id ?? null,
-                'total_promotion_value' => $order->total_promotion_value ?? 0,
-                'customer_id' => $request->customerId,
-                'receiver_name' => $request->receiverName ? $request->receiverName : $customer->name,
-                'receiver_address' => $request->receiverAddress ? $request->receiverAddress : $customer->address,
-                'receiver_phone' => $request->receiverPhone ? $request->receiverPhone : $customer->phone,
+            // TẤT CẢ validation đã pass, BẮT ĐẦU tạo order
+            $orderNumber = $this->generateOrderNumber();
+
+            $order = Order::create([
+                'order_number'        => $orderNumber,
+                'total_amount'        => $totalAmount,
+                'note'                => null,
+                'shipping_fee'        => 0,
+                'payment_method'      => $request->paymentMethod,
+                'customer_id'         => $request->customerId,
+                'receiver_name'       => $request->receiverName ? $request->receiverName : $customer->name,
+                'receiver_address'    => $request->receiverAddress ? $request->receiverAddress : $customer->address,
+                'receiver_phone'      => $request->receiverPhone ? $request->receiverPhone : $customer->phone,
+                'promotion_id'        => $promotion ? $promotion->id : null,
+                'total_promotion_value' => $totalPromotionValue,
             ]);
 
+            // Tạo order items và cập nhật stock
+            foreach ($validatedItems as $item) {
+                $book = $item['book'];
+                $capitalPrice = $book->capital_price ?? 0;
+
+                $order->orderItems()->create([
+                    'book_id'  => $item['bookId'],
+                    'quantity' => $item['quantity'],
+                    'price'    => $book->price,
+                    'capital_price' => $capitalPrice,
+                    'total_price' => $item['itemTotal'],
+                    'total_capital_price' => $capitalPrice * $item['quantity'],
+                ]);
+
+                InventoryHistory::create([
+                    'book_id'          => $book->id,
+                    'order_id'         => $order->id,
+                    'type'             => 'OUT',
+                    'qty_stock_before' => $book->quantity,
+                    'qty_change'       => (int) $item['quantity'],
+                    'qty_stock_after'  => $book->quantity - (int) $item['quantity'],
+                    'price'            => $book->price,
+                    'total_price'      => $item['itemTotal'],
+                    'transaction_date' => now(),
+                    'description'      => 'Xuất kho do bán hàng',
+                ]);
+
+                $book->decrement('quantity', $item['quantity']);
+                $book->increment('sold', $item['quantity']);
+            }
+
+            // Decrement promotion qty_limit sau khi tạo order thành công
+            if ($promotion && !is_null($promotion->qty_limit)) {
+                $promotion->decrement('qty_limit');
+            }
 
             $this->createCompletedOrderStatus($order->id, 'Order created successfully');
 
-            $order->load(['orderItems.book', 'statusHistories.orderStatus']);
+            $order->load(['orderItems.book', 'statusHistories.orderStatus', 'promotion']);
 
             return $this->successResponse(
                 201,
@@ -676,6 +679,57 @@ class OrderController extends Controller
                     $validatedItems[] = $cartItem;
                 }
 
+                // Validate promotion trước khi tạo order
+                $promotion = null;
+                $totalPromotionValue = 0;
+                if (isset($validated['promotionId']) && $validated['promotionId']) {
+                    $promotion = Promotion::find($validated['promotionId']);
+
+                    if (!$promotion) {
+                        return $this->errorResponse(404, 'Not Found', 'Promotion not found');
+                    }
+
+                    if ($promotion->status == '0') {
+                        return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
+                    }
+
+                    if (!is_null($promotion->order_min_value) && $totalAmount < (float) $promotion->order_min_value) {
+                        return $this->errorResponse(400, 'Bad Request', 'Đơn hàng chưa đạt giá trị tối thiểu để sử dụng mã khuyến mãi');
+                    }
+
+                    $now = now();
+                    if (($promotion->start_date && $now->lt($promotion->start_date)) || ($promotion->end_date && $now->gt($promotion->end_date))) {
+                        return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
+                    }
+
+                    if (!is_null($promotion->qty_limit) && (int) $promotion->qty_limit <= 0) {
+                        return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi đã hết lượt sử dụng');
+                    }
+
+                    if ($promotion->is_once_per_customer && $customerId) {
+                        $usedBefore = Order::where('promotion_id', $promotion->id)
+                            ->where('customer_id', $customerId)
+                            ->exists();
+                        if ($usedBefore) {
+                            return $this->errorResponse(400, 'Bad Request', 'Khách hàng đã sử dụng mã khuyến mãi này');
+                        }
+                    }
+
+                    // Tính giá trị khuyến mãi
+                    if ($promotion->promotion_type === 'percent') {
+                        $totalPromotionValue = $totalAmount * ((float) $promotion->promotion_value / 100);
+                        if ($promotion->is_max_promotion_value && !is_null($promotion->max_promotion_value)) {
+                            $totalPromotionValue = min($totalPromotionValue, (float) $promotion->max_promotion_value);
+                        }
+                    } else {
+                        $totalPromotionValue = (float) $promotion->promotion_value;
+                    }
+
+                    $totalPromotionValue = max(0, min($totalPromotionValue, $totalAmount));
+                    // Giảm tổng tiền sau khi áp dụng khuyến mãi
+                    $totalAmount -= $totalPromotionValue;
+                }
+
                 // Generate order number
                 $orderNumber = $this->generateOrderNumber();
 
@@ -690,6 +744,8 @@ class OrderController extends Controller
                     'receiver_name'      => $validated['name'],
                     'receiver_address'    => $validated['address'],
                     'receiver_phone'      => $validated['phone'],
+                    'promotion_id'       => $promotion ? $promotion->id : null,
+                    'total_promotion_value' => $totalPromotionValue,
                 ];
 
                 $order = Order::create($orderData);
@@ -730,67 +786,10 @@ class OrderController extends Controller
                     $cartItem->delete();
                 }
 
-                // Xử lý khuyến mãi
-                $totalPromotionValue = 0;
-                if (isset($validated['promotionId']) && $validated['promotionId']) {
-                    $promotion = Promotion::find($validated['promotionId']);
-
-                    if (!$promotion) {
-                        return $this->errorResponse(404, 'Not Found', 'Promotion not found');
-                    }
-
-                    if ($promotion->status == '0') {
-                        return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
-                    }
-
-                    if (!is_null($promotion->order_min_value) && $totalAmount < (float) $promotion->order_min_value) {
-                        return $this->errorResponse(400, 'Bad Request', 'Đơn hàng chưa đạt giá trị tối thiểu để sử dụng mã khuyến mãi');
-                    }
-
-                    $now = now();
-                    if (($promotion->start_date && $now->lt($promotion->start_date)) || ($promotion->end_date && $now->gt($promotion->end_date))) {
-                        return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
-                    }
-
-                    if (!is_null($promotion->qty_limit) && (int) $promotion->qty_limit <= 0) {
-                        return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi đã hết lượt sử dụng');
-                    }
-
-                    if ($promotion->is_once_per_customer && $customerId) {
-                        $usedBefore = Order::where('promotion_id', $promotion->id)
-                            ->where('customer_id', $customerId)
-                            ->exists();
-                        if ($usedBefore) {
-                            return $this->errorResponse(400, 'Bad Request', 'Khách hàng đã sử dụng mã khuyến mãi này');
-                        }
-                    }
-
-                    if ($promotion->promotion_type === 'percent') {
-                        $totalPromotionValue = $totalAmount * ((float) $promotion->promotion_value / 100);
-                        if ($promotion->is_max_promotion_value && !is_null($promotion->max_promotion_value)) {
-                            $totalPromotionValue = min($totalPromotionValue, (float) $promotion->max_promotion_value);
-                        }
-                    } else {
-                        $totalPromotionValue = (float) $promotion->promotion_value;
-                    }
-
-                    $totalPromotionValue = max(0, min($totalPromotionValue, $totalAmount));
-                    if (!is_null($promotion->qty_limit)) {
-                        $promotion->decrement('qty_limit');
-                    }
-
-                    $order->promotion_id = $promotion->id;
-                    $order->total_promotion_value = $totalPromotionValue;
-
-                    // Reduce total by discount
-                    $totalAmount -= $totalPromotionValue;
+                // Decrement promotion qty_limit sau khi tạo order thành công
+                if ($promotion && !is_null($promotion->qty_limit)) {
+                    $promotion->decrement('qty_limit');
                 }
-
-                $order->update([
-                    'total_amount' => $totalAmount,
-                    'promotion_id' => $order->promotion_id ?? null,
-                    'total_promotion_value' => $order->total_promotion_value ?? 0,
-                ]);
 
                 // Tạo trạng thái đơn hàng ban đầu
                 $this->createInitialOrderStatus($order->id, 'Order placed from web successfully');
@@ -879,6 +878,57 @@ class OrderController extends Controller
                 ];
             }
 
+            // Validate promotion trước khi tạo order
+            $promotion = null;
+            $totalPromotionValue = 0;
+            if ($request->promotion_id) {
+                $promotion = Promotion::find($request->promotion_id);
+
+                if (!$promotion) {
+                    return $this->errorResponse(404, 'Not Found', 'Promotion not found');
+                }
+
+                if ($promotion->status == '0') {
+                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
+                }
+
+                if (!is_null($promotion->order_min_value) && $totalAmount < (float) $promotion->order_min_value) {
+                    return $this->errorResponse(400, 'Bad Request', 'Đơn hàng chưa đạt giá trị tối thiểu để sử dụng mã khuyến mãi');
+                }
+
+                $now = now();
+                if (($promotion->start_date && $now->lt($promotion->start_date)) || ($promotion->end_date && $now->gt($promotion->end_date))) {
+                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
+                }
+
+                if (!is_null($promotion->qty_limit) && (int) $promotion->qty_limit <= 0) {
+                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi đã hết lượt sử dụng');
+                }
+
+                if ($promotion->is_once_per_customer && $user->customer_id) {
+                    $usedBefore = Order::where('promotion_id', $promotion->id)
+                        ->where('customer_id', $user->customer_id)
+                        ->exists();
+                    if ($usedBefore) {
+                        return $this->errorResponse(400, 'Bad Request', 'Khách hàng đã sử dụng mã khuyến mãi này');
+                    }
+                }
+
+                // Tính giá trị khuyến mãi
+                if ($promotion->promotion_type === 'percent') {
+                    $totalPromotionValue = $totalAmount * ((float) $promotion->promotion_value / 100);
+                    if ($promotion->is_max_promotion_value && !is_null($promotion->max_promotion_value)) {
+                        $totalPromotionValue = min($totalPromotionValue, (float) $promotion->max_promotion_value);
+                    }
+                } else {
+                    $totalPromotionValue = (float) $promotion->promotion_value;
+                }
+
+                $totalPromotionValue = max(0, min($totalPromotionValue, $totalAmount));
+                // Giảm tổng tiền sau khi áp dụng khuyến mãi
+                $totalAmount -= $totalPromotionValue;
+            }
+
             $orderNumber = $this->generateOrderNumber();
 
             $orderData = [
@@ -891,6 +941,8 @@ class OrderController extends Controller
                 'receiver_name'         => $request->name,
                 'receiver_address'      => $request->address,
                 'receiver_phone'        => $request->phone,
+                'promotion_id'          => $promotion ? $promotion->id : null,
+                'total_promotion_value' => $totalPromotionValue,
             ];
 
             $order = Order::create($orderData);
@@ -931,67 +983,10 @@ class OrderController extends Controller
                 $cartItem->delete();
             }
 
-            // Xử lý khuyến mãi
-            $totalPromotionValue = 0;
-            if ($request->promotion_id) {
-                $promotion = Promotion::find($request->promotion_id);
-
-                if (!$promotion) {
-                    return $this->errorResponse(404, 'Not Found', 'Promotion not found');
-                }
-
-                if ($promotion->status == '0') {
-                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
-                }
-
-                if (!is_null($promotion->order_min_value) && $totalAmount < (float) $promotion->order_min_value) {
-                    return $this->errorResponse(400, 'Bad Request', 'Đơn hàng chưa đạt giá trị tối thiểu để sử dụng mã khuyến mãi');
-                }
-
-                $now = now();
-                if (($promotion->start_date && $now->lt($promotion->start_date)) || ($promotion->end_date && $now->gt($promotion->end_date))) {
-                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi không còn hiệu lực');
-                }
-
-                if (!is_null($promotion->qty_limit) && (int) $promotion->qty_limit <= 0) {
-                    return $this->errorResponse(400, 'Bad Request', 'Mã khuyến mãi đã hết lượt sử dụng');
-                }
-
-                if ($promotion->is_once_per_customer && $user->customer_id) {
-                    $usedBefore = Order::where('promotion_id', $promotion->id)
-                        ->where('customer_id', $user->customer_id)
-                        ->exists();
-                    if ($usedBefore) {
-                        return $this->errorResponse(400, 'Bad Request', 'Khách hàng đã sử dụng mã khuyến mãi này');
-                    }
-                }
-
-                if ($promotion->promotion_type === 'percent') {
-                    $totalPromotionValue = $totalAmount * ((float) $promotion->promotion_value / 100);
-                    if ($promotion->is_max_promotion_value && !is_null($promotion->max_promotion_value)) {
-                        $totalPromotionValue = min($totalPromotionValue, (float) $promotion->max_promotion_value);
-                    }
-                } else {
-                    $totalPromotionValue = (float) $promotion->promotion_value;
-                }
-
-                $totalPromotionValue = max(0, min($totalPromotionValue, $totalAmount));
-                if (!is_null($promotion->qty_limit)) {
-                    $promotion->decrement('qty_limit');
-                }
-
-                $order->promotion_id = $promotion->id;
-                $order->total_promotion_value = $totalPromotionValue;
-
-                // Reduce total by discount
-                $totalAmount -= $totalPromotionValue;
+            // Decrement promotion qty_limit sau khi tạo order thành công
+            if ($promotion && !is_null($promotion->qty_limit)) {
+                $promotion->decrement('qty_limit');
             }
-
-            $order->update([
-                'total_amount' => $totalAmount,
-                'promotion_id' => $order->promotion_id ?? null,
-                'total_promotion_value' => $order->total_promotion_value ?? 0,
-            ]);
 
             // Tạo trạng thái đơn hàng ban đầu
             $this->createInitialOrderStatus($order->id, 'Order placed from cart successfully');
