@@ -172,6 +172,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::get('/', [ImportReceiptController::class, 'indexPaginated'])->name('view.import.receipts');
         Route::get('/{import_receipt}', [ImportReceiptController::class, 'show'])->name('show.import.receipt');
         Route::post('/', [ImportReceiptController::class, 'store'])->name('create.import.receipt');
+        Route::post('/complete/{id}', [ImportReceiptController::class, 'completeImportReceipt'])->name('complete.import.receipt');
         Route::post('/return/{id}', [ImportReceiptController::class, 'returnImportReceipt'])->name('return.import.receipt');
         Route::put('/', [ImportReceiptController::class, 'update'])->name('update.import.receipt');
     });

@@ -13,6 +13,7 @@ class ImportReceiptResource extends JsonResource
             'id'            => $this->id,
             'receipt_number' => $this->receipt_number,
             'type'          => $this->type ?? 'IMPORT',
+            'status'        => $this->status ?? 'processing',
             'notes'         => $this->notes,
             'totalAmount'  => $this->total_amount,
             'returnFee'    => $this->return_fee ? (float) $this->return_fee : null,
