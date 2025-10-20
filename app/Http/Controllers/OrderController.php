@@ -402,6 +402,7 @@ class OrderController extends Controller
 
                 InventoryHistory::create([
                     'book_id'          => $book->id,
+                    'code'             => $order->order_number,
                     'order_id'         => $order->id,
                     'type'             => 'OUT',
                     'qty_stock_before' => $book->quantity,
@@ -561,6 +562,7 @@ class OrderController extends Controller
 
                 InventoryHistory::create([
                     'book_id'          => $book->id,
+                    'code'             => $order->order_number,
                     'order_id'         => $order->id,
                     'type'             => 'OUT',
                     'qty_stock_before' => $book->quantity,
@@ -770,6 +772,7 @@ class OrderController extends Controller
 
                     InventoryHistory::create([
                         'book_id'          => $book->id,
+                        'code'             => $order->order_number,
                         'order_id'         => $order->id,
                         'type'             => 'OUT',
                         'qty_stock_before' => $book->quantity,
@@ -968,6 +971,7 @@ class OrderController extends Controller
 
                 InventoryHistory::create([
                     'book_id'          => $book->id,
+                    'code'             => $order->order_number,
                     'order_id'         => $order->id,
                     'type'             => 'OUT',
                     'qty_stock_before' => $book->quantity,
@@ -1030,6 +1034,7 @@ class OrderController extends Controller
 
                         InventoryHistory::create([
                             'book_id' => $orderItem->book_id,
+                            'code' => $order->order_number,
                             'order_id' => $order->id,
                             'type' => 'IN',
                             'qty_stock_before' => $orderItem->book->quantity,
@@ -1233,7 +1238,8 @@ class OrderController extends Controller
 
                         InventoryHistory::create([
                             'book_id' => $book->id,
-                            'order_id' => $order->id,
+                            'code' => $returnOrder->order_number,
+                            'order_id' => $returnOrder->id,
                             'type' => 'IN',
                             'qty_stock_before' => $book->quantity,
                             'qty_change' => (int) $item['quantity'],

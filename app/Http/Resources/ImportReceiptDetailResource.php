@@ -10,7 +10,10 @@ class ImportReceiptDetailResource extends JsonResource
     public function toArray($request)
     {
         return [
+            'id'          => $this->id,
             'quantity'     => $this->quantity,
+            'returnQty'    => $this->return_qty ?? 0,
+            'price'        => $this->price ? (float) $this->price : null,
             'totalPrice'  => $this->quantity * $this->supply->supply_price,
             'supply' => [
                 'id' => $this->supply->id,

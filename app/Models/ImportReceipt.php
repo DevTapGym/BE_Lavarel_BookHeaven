@@ -11,9 +11,14 @@ class ImportReceipt extends Model
 
     protected $fillable = [
         'receipt_number',
+        'type',
         'total_amount',
         'notes',
         'employee_id',
+        'parent_id',
+        'return_fee',
+        'return_fee_type',
+        'total_refund_amount',
         'created_by',
         'updated_by',
     ];
@@ -26,5 +31,15 @@ class ImportReceipt extends Model
     public function importReceiptDetails()
     {
         return $this->hasMany(ImportReceiptDetail::class);
+    }
+
+    public function parentReceipt()
+    {
+        return $this->belongsTo(ImportReceipt::class, 'parent_id');
+    }
+
+    public function returnReceipts()
+    {
+        return $this->hasMany(ImportReceipt::class, 'parent_id');
     }
 }
