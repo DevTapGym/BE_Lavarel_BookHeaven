@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ImportReceipt;
 use Illuminate\Http\Request;
 use App\Http\Requests\ImportReceiptRequest;
+use App\Http\Requests\UpdateImportReceiptRequest;
 use App\Http\Requests\ReturnImportReceiptRequest;
 use Illuminate\Support\Facades\DB;
 use App\Models\ImportReceiptDetail;
@@ -86,14 +87,16 @@ class ImportReceiptController extends Controller
                 $totalAmount += $supply->supply_price * $detail['quantity'];
             }
 
+            // Tạo phiếu nhập với status = 'processing' (chưa cộng tồn kho)
             $importReceipt = ImportReceipt::create([
                 'receipt_number' => $receiptNumber,
+                'status' => 'processing',
                 'notes' => $request->notes,
                 'employee_id' => $employee->id,
-                'total_amount' => $totalAmount, 
-                'created_by' => $request->employeeEmail,
+                'total_amount' => $totalAmount,
             ]);
 
+            // Chỉ tạo chi tiết phiếu nhập, CHƯA cộng vào kho
             foreach ($request->importReceiptItems as $detail) {
                 // Tìm supply dựa trên book_id và supplier_id
                 $supply = Supply::where('book_id', $detail['bookId'])
@@ -101,8 +104,6 @@ class ImportReceiptController extends Controller
                     ->firstOrFail();
 
                 $price = $supply->supply_price;
-
-                $book = $supply->book;
                 
                 ImportReceiptDetail::create([
                     'import_receipt_id' => $importReceipt->id,
@@ -110,38 +111,6 @@ class ImportReceiptController extends Controller
                     'quantity' => $detail['quantity'],
                     'price' => $price,
                 ]);
-                
-                // Tính giá vốn bình quân gia quyền
-                // Công thức: Giá vốn mới = (Tồn kho cũ * Giá vốn cũ + SL nhập * Giá nhập) / (Tồn kho cũ + SL nhập)
-                $oldQuantity = (float) $book->quantity;
-                $oldCapitalPrice = (float) ($book->capital_price ?? 0);
-                $importQuantity = (float) $detail['quantity'];
-                $importPrice = (float) $price;
-
-                $newQuantity = $oldQuantity + $importQuantity;
-                $newCapitalPrice = 0;
-
-                if ($newQuantity > 0) {
-                    $newCapitalPrice = (($oldQuantity * $oldCapitalPrice) + ($importQuantity * $importPrice)) / $newQuantity;
-                }
-
-                InventoryHistory::create([
-                    'book_id' => $book->id,
-                    'code' => $importReceipt->receipt_number,
-                    'import_receipt_id' => $importReceipt->id,
-                    'type' => 'IN',
-                    'qty_stock_before' => $book->quantity,
-                    'qty_change' => (int) $detail['quantity'],
-                    'qty_stock_after' => $book->quantity + $detail['quantity'],
-                    'price' => $book->price,
-                    'total_price' => $detail['quantity'] * $book->price,
-                    'transaction_date' => now(),
-                    'description' => 'Nhập kho - ' . $importReceipt->receipt_number,
-                ]);
-
-                // Cập nhật số lượng sách và giá vốn
-                $book->increment('quantity', $detail['quantity']);
-                $book->update(['capital_price' => $newCapitalPrice]);
             }
 
             $importReceipt->load('importReceiptDetails.supply.book');
@@ -154,59 +123,146 @@ class ImportReceiptController extends Controller
         });
     }
 
-    // public function update(ImportReceiptRequest $request)
-    // {
-    //     return DB::transaction(function () use ($request) {
-    //         $importReceipt = ImportReceipt::findOrFail($request->id);
+    public function update(UpdateImportReceiptRequest $request)
+    {
+        return DB::transaction(function () use ($request) {
+            $importReceipt = ImportReceipt::findOrFail($request->id);
 
-    //         $totalAmount = collect($request->details)->sum('total_price');
+            // Chỉ cho phép update khi status là 'processing'
+            if ($importReceipt->status !== 'processing') {
+                return $this->errorResponse(
+                    400,
+                    'Bad Request',
+                    'Only import receipts with status "processing" can be updated'
+                );
+            }
 
-    //         $importReceipt->update([
-    //             'receipt_number' => $request->receipt_number,
-    //             'notes' => $request->notes,
-    //             //'employee_id' => $request->employee_id,
-    //             'total_amount' => $totalAmount,
-    //         ]);
+            // Tính lại total amount từ các items mới
+            $totalAmount = 0;
+            foreach ($request->importReceiptItems as $detail) {
+                $supply = Supply::where('book_id', $detail['bookId'])
+                    ->where('supplier_id', $detail['supplierId'])
+                    ->firstOrFail();
 
-    //         // Lấy chi tiết cũ để rollback số lượng sách
-    //         $oldDetails = ImportReceiptDetail::where('import_receipt_id', $importReceipt->id)->get();
+                $totalAmount += $supply->supply_price * $detail['quantity'];
+            }
 
-    //         foreach ($oldDetails as $oldDetail) {
-    //             $supply = Supply::find($oldDetail->supply_id);
-    //             if ($supply && $supply->book) {
-    //                 $supply->book->decrement('quantity', $oldDetail->quantity);
-    //             }
-    //         }
+            $importReceipt->update([
+                'notes' => $request->notes,
+                'total_amount' => $totalAmount,
+            ]);
 
-    //         // Xóa chi tiết cũ
-    //         ImportReceiptDetail::where('import_receipt_id', $importReceipt->id)->delete();
+            ImportReceiptDetail::where('import_receipt_id', $importReceipt->id)->delete();
 
-    //         // Tạo lại chi tiết mới + cộng số lượng sách
-    //         foreach ($request->details as $detail) {
-    //             $supply = Supply::findOrFail($detail['supply_id']);
-    //             $price = $supply->supply_price;
+            foreach ($request->importReceiptItems as $detail) {
+                $supply = Supply::where('book_id', $detail['bookId'])
+                    ->where('supplier_id', $detail['supplierId'])
+                    ->firstOrFail();
 
-    //             ImportReceiptDetail::create([
-    //                 'import_receipt_id' => $importReceipt->id,
-    //                 'supply_id' => $detail['supply_id'],
-    //                 'quantity' => $detail['quantity'],
-    //                 'price' => $price,
-    //             ]);
+                $price = $supply->supply_price;
 
-    //             // cập nhật số lượng sách
-    //             $book = $supply->book;
-    //             $book->increment('quantity', $detail['quantity']);
-    //         }
+                ImportReceiptDetail::create([
+                    'import_receipt_id' => $importReceipt->id,
+                    'supply_id' => $supply->id,
+                    'quantity' => $detail['quantity'],
+                    'price' => $price,
+                ]);
+            }
 
-    //         $importReceipt->load('importReceiptDetails');
+            $importReceipt->load('importReceiptDetails.supply.book');
 
-    //         return $this->successResponse(
-    //             200,
-    //             'Import Receipt updated successfully',
-    //             $importReceipt
-    //         );
-    //     });
-    // }
+            return $this->successResponse(
+                200,
+                'Import Receipt updated successfully',
+                new ImportReceiptResource($importReceipt)
+            );
+        });
+    }
+
+    /**
+     * Complete import receipt (Hoàn thành phiếu nhập)
+     * Chuyển status từ 'processing' sang 'completed' và cộng số lượng vào kho
+     */
+    public function completeImportReceipt($id)
+    {
+        try {
+            return DB::transaction(function () use ($id) {
+                // Tìm phiếu nhập
+                $importReceipt = ImportReceipt::with(['importReceiptDetails.supply.book'])->find($id);
+                
+                if (!$importReceipt) {
+                    return $this->errorResponse(404, 'Not Found', 'Import receipt not found');
+                }
+
+                // Kiểm tra status
+                if ($importReceipt->status === 'completed') {
+                    return $this->errorResponse(400, 'Bad Request', 'Import receipt already completed');
+                }
+
+                if ($importReceipt->status === 'cancelled') {
+                    return $this->errorResponse(400, 'Bad Request', 'Cannot complete cancelled import receipt');
+                }
+
+                // Cộng số lượng vào kho và tạo InventoryHistory
+                foreach ($importReceipt->importReceiptDetails as $detail) {
+                    $supply = $detail->supply;
+                    $book = $supply->book;
+                    $quantity = $detail->quantity;
+                    $price = $detail->price;
+
+                    // Tính giá vốn bình quân gia quyền
+                    $oldQuantity = (float) $book->quantity;
+                    $oldCapitalPrice = (float) ($book->capital_price ?? 0);
+                    $importQuantity = (float) $quantity;
+                    $importPrice = (float) $price;
+
+                    $newQuantity = $oldQuantity + $importQuantity;
+                    $newCapitalPrice = 0;
+
+                    if ($newQuantity > 0) {
+                        $newCapitalPrice = (($oldQuantity * $oldCapitalPrice) + ($importQuantity * $importPrice)) / $newQuantity;
+                    }
+
+                    // Tạo InventoryHistory
+                    InventoryHistory::create([
+                        'book_id' => $book->id,
+                        'code' => $importReceipt->receipt_number,
+                        'import_receipt_id' => $importReceipt->id,
+                        'type' => 'IN',
+                        'qty_stock_before' => $book->quantity,
+                        'qty_change' => (int) $quantity,
+                        'qty_stock_after' => $book->quantity + $quantity,
+                        'price' => $book->price,
+                        'total_price' => $quantity * $book->price,
+                        'transaction_date' => now(),
+                        'description' => 'Nhập kho - ' . $importReceipt->receipt_number,
+                    ]);
+
+                    // Cập nhật số lượng sách và giá vốn
+                    $book->increment('quantity', $quantity);
+                    $book->update(['capital_price' => $newCapitalPrice]);
+                }
+
+                // Cập nhật status thành 'completed'
+                $importReceipt->update(['status' => 'completed']);
+
+                // Reload relationships
+                $importReceipt->load(['importReceiptDetails.supply.book', 'employee']);
+
+                return $this->successResponse(
+                    200,
+                    'Import receipt completed successfully',
+                    new ImportReceiptResource($importReceipt)
+                );
+            });
+        } catch (Exception $e) {
+            return $this->errorResponse(
+                500,
+                'Error completing import receipt',
+                $e->getMessage()
+            );
+        }
+    }
 
     /**
      * Return import receipt (Trả hàng nhập)

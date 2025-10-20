@@ -12,6 +12,7 @@ class ImportReceipt extends Model
     protected $fillable = [
         'receipt_number',
         'type',
+        'status',
         'total_amount',
         'notes',
         'employee_id',
