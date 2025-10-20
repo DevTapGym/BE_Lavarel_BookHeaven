@@ -8,7 +8,8 @@ class ImportReceiptDetail extends Model
 {
     protected $fillable = [
         'quantity',
-        'total_price',
+        'return_qty',
+        'price',
 
         'import_receipt_id',
         'supply_id',

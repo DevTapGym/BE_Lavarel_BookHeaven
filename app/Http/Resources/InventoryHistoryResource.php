@@ -11,6 +11,7 @@ class InventoryHistoryResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'code' => $this->code,
             'bookId' => $this->book_id,
             'bookTitle' => $this->book->title ?? '',
             'orderId' => $this->order_id ?? 0,

@@ -11,6 +11,7 @@ class InventoryHistory extends Model
 
     protected $fillable = [
         'book_id',
+        'code',
         'order_id',
         'import_receipt_id',
         'type',
