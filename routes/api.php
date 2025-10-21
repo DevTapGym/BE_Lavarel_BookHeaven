@@ -35,6 +35,7 @@ Route::prefix('/v1')->group(function () {
 
     Route::prefix('/auth')->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/login-google', [AuthController::class, 'loginWithGoogle']);
         Route::post('/register', [AuthController::class, 'register']);
         Route::get('/refresh', [AuthController::class, 'refreshToken']);
         Route::post('/send-code', [ActivationController::class, 'sendActivationCode']);
