@@ -229,14 +229,14 @@ class DashBoardController extends Controller
         try {
             // Lấy thống kê số lượng theo giới tính từ bảng customers
             $rawStats = Customer::select('gender', DB::raw('COUNT(*) as total'))
-                ->whereIn('gender', ['Male', 'Female', 'Other'])
+                ->whereIn('gender', ['Nam', 'Nữ', 'Khác'])
                 ->groupBy('gender')
                 ->pluck('total', 'gender'); // returns associative collection
 
             $mapping = [
-                'Male' => 'Nam',
-                'Female' => 'Nữ',
-                'Other' => 'Khác',
+                'Nam' => 'Nam',
+                'Nữ' => 'Nữ',
+                'Khác' => 'Khác',
             ];
 
             $totalAll = $rawStats->sum();
@@ -275,7 +275,7 @@ class DashBoardController extends Controller
             $tongSoLuongNhanVien = Employee::count();
             $tongSoLuongDatHangThanhCong = Order::whereHas('statusHistories', function ($query) {
                 $query->whereHas('orderStatus', function ($statusQuery) {
-                    $statusQuery->where('name', 'Delivered')->where('sequence', 4);
+                    $statusQuery->where('sequence', 7);
                 });
             })->count();
 
@@ -317,8 +317,7 @@ class DashBoardController extends Controller
                 ->leftJoin('orders', 'order_items.order_id', '=', 'orders.id')
                 ->leftJoin('order_status_histories', 'orders.id', '=', 'order_status_histories.order_id')
                 ->leftJoin('order_statuses', 'order_status_histories.order_status_id', '=', 'order_statuses.id')
-                ->where('order_statuses.name', 'Delivered')
-                ->where('order_statuses.sequence', 4)
+                ->where('order_statuses.sequence', 7)
                 ->whereIn('categories.name', $categories)
                 ->groupBy('categories.name')
                 ->pluck('soLuongBan', 'theLoai');

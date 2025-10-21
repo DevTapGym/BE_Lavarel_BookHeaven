@@ -89,7 +89,7 @@ class AuthController extends Controller
             ]);
 
             // Gán role cho user
-            $user->assignRole('admin');
+            $user->assignRole('CUSTOMER');
 
             // Tạo Customer tương ứng
             $customer = Customer::create([
@@ -123,6 +123,141 @@ class AuthController extends Controller
             );
         });
     }
+
+    public function loginWithGoogle(Request $request)
+    {
+        $request->validate([
+            'name'   => 'required|string|max:255',
+            'email'  => 'required|email',
+            'avatar' => 'nullable|string',
+        ]);
+
+        $email = $request->email;
+
+        // Kiểm tra xem user đã tồn tại hay chưa
+        $existingUser = User::where('email', $email)->first();
+
+        if ($existingUser) {
+            // Nếu user đã tồn tại → cho đăng nhập luôn
+            $role = $existingUser->roles()->pluck('name')->first() ?? 'user';
+            $customClaims = [
+                'role' => $role,
+                'is_active' => $existingUser->is_active,
+            ];
+
+            $accessToken = JWTAuth::claims($customClaims)->fromUser($existingUser);
+
+            // Tạo refresh token mới
+            $refreshTokenPayload = [
+                'sub' => $existingUser->id,
+                'jti' => Str::uuid()->toString(),
+                'type' => 'refresh',
+            ];
+
+            $refreshToken = JWTAuth::getJWTProvider()->encode(
+                array_merge(
+                    $refreshTokenPayload,
+                    ['exp' => now()->addDays(14)->timestamp]
+                )
+            );
+
+            // Cập nhật jti mới
+            $accessPayload = JWTAuth::setToken($accessToken)->getPayload();
+            $accessJti = $accessPayload->get('jti');
+            $existingUser->current_jti = $accessJti;
+            $existingUser->save();
+
+            return $this->successResponse(
+                200,
+                'Google login successful (existing user)',
+                $this->formatAuthData($accessToken, $existingUser, $refreshToken)
+            )->cookie(
+                'refresh_token',
+                $refreshToken,
+                60 * 24 * 14,
+                null,
+                null,
+                true,
+                true
+            );
+        }
+
+        // Nếu chưa có user → tạo mới toàn bộ
+        return DB::transaction(function () use ($request) {
+            $user = User::create([
+                'name'       => $request->name,
+                'email'      => $request->email,
+                'avatar'     => $request->avatar,
+                'password'   => bcrypt(Str::random(16)), // password ngẫu nhiên
+                'is_active'  => true,
+            ]);
+
+            // Gán role mặc định (vd: user)
+            $user->assignRole('CUSTOMER');
+
+            // Tạo Customer tương ứng
+            $customer = Customer::create([
+                'name'    => $request->name,
+                'email'   => $request->email,
+                'phone'   => null,
+                'address' => null,
+                'gender'  => 'Khác',
+            ]);
+
+            // Liên kết User với Customer
+            $user->update(['customer_id' => $customer->id]);
+
+            // Tạo giỏ hàng cho Customer
+            Cart::create([
+                'customer_id' => $customer->id,
+                'count'       => 0,
+                'total_price' => 0,
+            ]);
+
+            // Tạo token
+            $role = $user->roles()->pluck('name')->first() ?? 'user';
+            $customClaims = [
+                'role' => $role,
+                'is_active' => $user->is_active,
+            ];
+
+            $accessToken = JWTAuth::claims($customClaims)->fromUser($user);
+
+            $refreshTokenPayload = [
+                'sub' => $user->id,
+                'jti' => Str::uuid()->toString(),
+                'type' => 'refresh',
+            ];
+
+            $refreshToken = JWTAuth::getJWTProvider()->encode(
+                array_merge(
+                    $refreshTokenPayload,
+                    ['exp' => now()->addDays(14)->timestamp]
+                )
+            );
+
+            $accessPayload = JWTAuth::setToken($accessToken)->getPayload();
+            $accessJti = $accessPayload->get('jti');
+            $user->current_jti = $accessJti;
+            $user->save();
+
+            return $this->successResponse(
+                200,
+                'Google login successful (new user)',
+                $this->formatAuthData($accessToken, $user, $refreshToken)
+            )->cookie(
+                'refresh_token',
+                $refreshToken,
+                60 * 24 * 14,
+                null,
+                null,
+                true,
+                true
+            );
+        });
+    }
+
+
 
     public function me()
     {

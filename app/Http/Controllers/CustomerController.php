@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
-use Spatie\QueryBuilder\AllowedSort;
+use Carbon\Carbon;
 
 class CustomerController extends Controller
 {
@@ -104,6 +104,10 @@ class CustomerController extends Controller
                 'gender' => 'nullable|in:Nam,Nữ,Khác',
                 'date_of_birth' => 'nullable|date',
             ]);
+            if (!empty($request->date_of_birth)) {
+                $validated['date_of_birth'] = Carbon::parse($request->date_of_birth)->format('Y-m-d');
+            }
+
 
             $customer = Customer::findOrFail($validated['id']);
             $customer->update($validated);
