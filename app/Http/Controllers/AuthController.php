@@ -89,7 +89,7 @@ class AuthController extends Controller
             ]);
 
             // Gán role cho user
-            $user->assignRole('admin');
+            $user->assignRole('CUSTOMER');
 
             // Tạo Customer tương ứng
             $customer = Customer::create([
@@ -193,7 +193,7 @@ class AuthController extends Controller
             ]);
 
             // Gán role mặc định (vd: user)
-            $user->assignRole('admin');
+            $user->assignRole('CUSTOMER');
 
             // Tạo Customer tương ứng
             $customer = Customer::create([

@@ -125,8 +125,11 @@ class PermissionSeeder extends Seeder
             ['name' => 'view orders history', 'guard_name' => 'api', 'apiPath' => '/v1/order/history', 'method' => 'GET', 'module' => 'Order'],
             ['name' => 'show order', 'guard_name' => 'api', 'apiPath' => '/v1/order/{order}', 'method' => 'GET', 'module' => 'Order'],
             ['name' => 'create order', 'guard_name' => 'api', 'apiPath' => '/v1/order/create', 'method' => 'POST', 'module' => 'Order'],
+            ['name' => 'create order for web', 'guard_name' => 'api', 'apiPath' => '/v1/order/create/web', 'method' => 'POST', 'module' => 'Order'],
             ['name' => 'place order', 'guard_name' => 'api', 'apiPath' => '/v1/order/place', 'method' => 'POST', 'module' => 'Order'],
             ['name' => 'place order for web', 'guard_name' => 'api', 'apiPath' => '/v1/order/place/web', 'method' => 'POST', 'module' => 'Order'],
+            ['name' => 'update order', 'guard_name' => 'api', 'apiPath' => '/v1/order', 'method' => 'PUT', 'module' => 'Order'],
+            ['name' => 'download order pdf', 'guard_name' => 'api', 'apiPath' => '/v1/order/downloadPdf/{id}', 'method' => 'GET', 'module' => 'Order'],
 
             ['name' => 'view roles', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'GET', 'module' => 'Role'],
             ['name' => 'view roles no pagination', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'GET', 'module' => 'Role'],
