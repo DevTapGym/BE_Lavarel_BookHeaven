@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\BookImage;
 use App\Models\ImportReceipt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,9 @@ use Throwable;
 use Exception;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class BookController extends Controller
 {
@@ -554,5 +558,268 @@ class BookController extends Controller
             'Sold books retrieved successfully',
             $orderItems
         );
+    }
+
+    /**
+     * Export books to Excel file
+     * GET /api/books/export-excel
+     */
+    public function exportToExcel()
+    {
+        try {
+            // Lấy danh sách books với quan hệ categories và bookImages
+            $books = Book::with(['categories', 'bookImages'])
+                ->where('is_active', true)
+                ->get();
+
+            // Tạo spreadsheet mới
+            $spreadsheet = new Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // Set headers
+            $headers = [
+                'Tên sách',
+                'Giá bán',
+                'Số lượng tồn',
+                'Tác giả',
+                'Thể loại',
+                'Ảnh chính',
+                'Ảnh phụ'
+            ];
+
+            $columnIndex = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($columnIndex . '1', $header);
+                $sheet->getStyle($columnIndex . '1')->getFont()->setBold(true);
+                $columnIndex++;
+            }
+
+            // Fill data
+            $row = 2;
+            foreach ($books as $book) {
+                // Lấy tên categories (nhiều-nhiều)
+                $categoryNames = $book->categories->pluck('name')->join(', ');
+                
+                // Lấy URLs của bookImages và ghép bằng dấu chấm phẩy
+                $imageUrls = $book->bookImages->pluck('url')->filter()->join(';');
+
+                $sheet->setCellValue('A' . $row, $book->title);
+                $sheet->setCellValue('B' . $row, $book->price);
+                $sheet->setCellValue('C' . $row, $book->quantity);
+                $sheet->setCellValue('D' . $row, $book->author);
+                $sheet->setCellValue('E' . $row, $categoryNames);
+                $sheet->setCellValue('F' . $row, $book->thumbnail);
+                $sheet->setCellValue('G' . $row, $imageUrls);
+
+                $row++;
+            }
+
+            // Auto size columns
+            foreach (range('A', 'G') as $col) {
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+            }
+
+            // Tạo filename với timestamp
+            $fileName = 'books_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+            // Tạo writer và lưu vào temporary buffer
+            $writer = new Xlsx($spreadsheet);
+            
+            // Lưu vào temporary file
+            $temp_file = tempnam(sys_get_temp_dir(), 'excel_');
+            $writer->save($temp_file);
+            
+            // Đọc nội dung file
+            $fileContent = file_get_contents($temp_file);
+            
+            // Xóa temporary file
+            unlink($temp_file);
+
+            // Trả về response (CORS headers sẽ được thêm bởi CorsMiddleware)
+            return response($fileContent, 200)
+                ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+                ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"')
+                ->header('Cache-Control', 'max-age=0');
+
+        } catch (Throwable $th) {
+            return $this->errorResponse(
+                500,
+                'Lỗi khi export file Excel',
+                $th->getMessage()
+            );
+        }
+    }
+
+    /**
+     * Import books from Excel file
+     * POST /api/books/import-excel
+     */
+    public function importBooksFromExcel(Request $request)
+    {
+        try {
+            // Validate file
+            $request->validate([
+                'file' => 'required|file|mimes:xlsx,xls|max:10240', // Max 10MB
+            ]);
+
+            $file = $request->file('file');
+            
+            if (!$file || !$file->isValid()) {
+                return $this->errorResponse(
+                    400,
+                    'Bad Request',
+                    'File không hợp lệ hoặc không được để trống'
+                );
+            }
+
+            // Đọc file Excel
+            $spreadsheet = IOFactory::load($file->getPathname());
+            $sheet = $spreadsheet->getActiveSheet();
+            $data = $sheet->toArray();
+
+            // Bỏ qua header row (row 1)
+            $dataRows = array_slice($data, 1);
+
+            $importedBooks = [];
+            $errors = [];
+
+            DB::beginTransaction();
+
+            foreach ($dataRows as $index => $row) {
+                $rowNumber = $index + 2; // +2 vì bỏ header và index bắt đầu từ 0
+
+                try {
+                    // Skip empty rows
+                    if (empty(array_filter($row))) {
+                        continue;
+                    }
+
+                    $mainText = trim($row[0] ?? '');
+                    $price = $row[1] ?? null;
+                    $quantity = $row[2] ?? null;
+                    $author = trim($row[3] ?? '');
+                    $categoryName = trim($row[4] ?? '');
+                    $thumbnail = trim($row[5] ?? '');
+                    $imageUrls = trim($row[6] ?? '');
+
+                    // Validate dữ liệu
+                    if (empty($mainText)) {
+                        $errors[] = "Dòng {$rowNumber}: Tên sách không được để trống";
+                        continue;
+                    }
+
+                    if (!is_numeric($price) || $price <= 0) {
+                        $errors[] = "Dòng {$rowNumber}: Giá sách phải là số lớn hơn 0";
+                        continue;
+                    }
+
+                    if (!is_numeric($quantity) || $quantity < 0) {
+                        $errors[] = "Dòng {$rowNumber}: Số lượng sách phải là số >= 0";
+                        continue;
+                    }
+
+                    if (empty($author)) {
+                        $errors[] = "Dòng {$rowNumber}: Tác giả không được để trống";
+                        continue;
+                    }
+
+                    if (empty($categoryName)) {
+                        $errors[] = "Dòng {$rowNumber}: Thể loại không được để trống";
+                        continue;
+                    }
+
+                    // Tìm hoặc tạo categories (có thể có nhiều category cách nhau bằng dấu phẩy)
+                    $categoryNames = array_map('trim', explode(',', $categoryName));
+                    $categoryIds = [];
+
+                    foreach ($categoryNames as $catName) {
+                        $category = Category::firstOrCreate(
+                            ['name' => $catName],
+                            ['description' => 'Auto-created from Excel import']
+                        );
+                        $categoryIds[] = $category->id;
+                    }
+
+                    if (empty($categoryIds)) {
+                        $errors[] = "Dòng {$rowNumber}: Không thể tạo hoặc tìm thấy thể loại";
+                        continue;
+                    }
+
+                    // Tạo Book
+                    $book = Book::create([
+                        'title' => $mainText,
+                        'price' => $price,
+                        'quantity' => $quantity,
+                        'author' => $author,
+                        'thumbnail' => $thumbnail,
+                        'sold' => 0,
+                        'is_active' => true,
+                        'sale_off' => 0,
+                    ]);
+
+                    // Attach categories
+                    $book->categories()->attach($categoryIds);
+
+                    // Tạo BookImages nếu có
+                    if (!empty($imageUrls)) {
+                        $urls = array_map('trim', explode(';', $imageUrls));
+                        
+                        foreach ($urls as $url) {
+                            if (!empty($url)) {
+                                BookImage::create([
+                                    'book_id' => $book->id,
+                                    'url' => $url,
+                                ]);
+                            }
+                        }
+                    }
+
+                    // Load relationships để trả về
+                    $book->load(['categories', 'bookImages']);
+                    $importedBooks[] = $book;
+
+                } catch (Exception $e) {
+                    $errors[] = "Dòng {$rowNumber}: " . $e->getMessage();
+                    continue;
+                }
+            }
+
+            // Nếu có lỗi nhưng vẫn import được một số sách
+            if (!empty($errors) && !empty($importedBooks)) {
+                DB::commit();
+                return response()->json([
+                    'status' => 206, // Partial Content
+                    'message' => 'Import hoàn tất với một số lỗi. Đã import ' . count($importedBooks) . ' cuốn sách.',
+                    'data' => $importedBooks,
+                    'errors' => $errors
+                ], 206);
+            }
+
+            // Nếu có lỗi và không import được sách nào
+            if (!empty($errors) && empty($importedBooks)) {
+                DB::rollBack();
+                return $this->errorResponse(
+                    400,
+                    'Import thất bại',
+                    implode('; ', $errors)
+                );
+            }
+
+            DB::commit();
+
+            return $this->successResponse(
+                200,
+                'Import sách thành công! Đã import ' . count($importedBooks) . ' cuốn sách.',
+                $importedBooks
+            );
+
+        } catch (Throwable $th) {
+            DB::rollBack();
+            return $this->errorResponse(
+                500,
+                'Lỗi khi import file Excel',
+                $th->getMessage()
+            );
+        }
     }
 }

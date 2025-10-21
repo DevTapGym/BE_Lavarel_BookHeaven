@@ -55,8 +55,8 @@ Route::prefix('/v1')->group(function () {
         Route::get('/sale-off', [BookController::class, 'getBookSaleOff']);
         Route::get('/banner', [BookController::class, 'getBookBanner']);
         Route::get('/top-selling', [BookController::class, 'getTop3BestSellingBooksByYear']);
-        Route::get('/{book}', [BookController::class, 'show']);
-        Route::get('/web/{book}', [BookController::class, 'showForWeb']);
+        Route::get('/{book}', [BookController::class, 'show'])->where('book', '[0-9]+');
+        Route::get('/web/{book}', [BookController::class, 'showForWeb'])->where('book', '[0-9]+');
         Route::get('/category/{category_id}', [BookController::class, 'getBooksByCategory']);
         Route::get('/feature/{book_id}', [BookFeatureController::class, 'index'])->name('view.book.features');
         Route::get('/images/{book_id}', [BookImageController::class, 'getBookImages'])->name('view.book.images');
@@ -129,6 +129,9 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::post('/', [BookController::class, 'store'])->name('create.book');
         Route::put('/', [BookController::class, 'update'])->name('update.book');
         Route::delete('/{book}', [BookController::class, 'destroy'])->name('delete.book');
+        // Excel import/export
+        Route::get('/export-excel', [BookController::class, 'exportToExcel'])->name('export.books.excel');
+        Route::post('/import-excel', [BookController::class, 'importBooksFromExcel'])->name('import.books.excel');
         // category
         Route::post('/attach-categories', [BookController::class, 'attachCategories'])->name('attach.book.categories');
         Route::put('/sync-categories', [BookController::class, 'syncCategories'])->name('sync.book.categories');

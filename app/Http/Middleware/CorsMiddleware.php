@@ -34,6 +34,7 @@ class CorsMiddleware
         $response->headers->set('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept, x-no-retry');
         $response->headers->set('Access-Control-Allow-Credentials', 'true');
         $response->headers->set('Access-Control-Max-Age', '3600');
+        $response->headers->set('Access-Control-Expose-Headers', 'Content-Disposition, Content-Type, Content-Length');
 
         // Nếu là preflight request (OPTIONS) thì trả về ngay
         if ($request->getMethod() === 'OPTIONS') {
