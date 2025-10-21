@@ -97,7 +97,7 @@ class AuthController extends Controller
                 'email'   => $request->email,
                 'phone'   => $request->phone,
                 'address' => null, // Sẽ được cập nhật sau
-                'gender' => 'Other',
+                'gender' => 'Khác',
             ]);
 
             // Liên kết User với Customer (cần thêm customer_id vào bảng users)
