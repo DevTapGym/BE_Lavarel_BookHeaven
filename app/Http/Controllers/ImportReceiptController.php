@@ -406,6 +406,7 @@ class ImportReceiptController extends Controller
                 // Set total refund amount
                 $returnReceipt->total_refund_amount = $totalAmount;
                 $returnReceipt->total_amount = $totalAmount;
+                $returnReceipt->status = 'completed';
                 $returnReceipt->save();
 
                 // Load relationships
