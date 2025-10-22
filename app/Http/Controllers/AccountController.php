@@ -6,11 +6,13 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Resources\UserAccountResource;
 use App\Http\Resources\UserAccountListResource;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
+use App\Models\Customer;
 use Throwable;
 
 class AccountController extends Controller
@@ -120,6 +122,21 @@ class AccountController extends Controller
             ];
 
             $user = User::create($userData);
+
+            if (!empty($validated['customer_id'])) {
+                $customer = Customer::find($validated['customer_id']);
+                if ($customer) {
+                    $customer->update(['email' => $validated['email']]);
+                }
+            }
+
+            if (!empty($validated['employee_id'])) {
+                $employee = Employee::find($validated['employee_id']);
+                if ($employee) {
+                    $employee->update(['email' => $validated['email']]);
+                }
+            }
+
             $user->assignRole($role);
             $user->load(['roles', 'customer', 'employee']);
 
@@ -130,6 +147,7 @@ class AccountController extends Controller
             );
         });
     }
+
 
     public function toggleActiveStatus(User $user)
     {

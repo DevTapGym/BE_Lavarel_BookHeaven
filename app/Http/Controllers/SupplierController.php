@@ -65,8 +65,7 @@ class SupplierController extends Controller
 
     public function getSuppliesBySupplier($id)
     {
-        $supplier = Supplier::with(['supplies'])->find($id);
-
+        $supplier = Supplier::with(['supplies.book'])->find($id);
         if (!$supplier) {
             return $this->errorResponse(
                 404,
