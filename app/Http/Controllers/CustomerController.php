@@ -9,6 +9,7 @@ use Throwable;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use Carbon\Carbon;
+use Exception;
 
 class CustomerController extends Controller
 {
@@ -48,6 +49,22 @@ class CustomerController extends Controller
                 'Error retrieving customers',
                 $th->getMessage()
             );
+        }
+    }
+
+    public function getCustomersWithoutAccount()
+    {
+        try {
+            // Lấy danh sách customer chưa có user liên kết
+            $customers = Customer::whereDoesntHave('user')->get();
+
+            return $this->successResponse(
+                200,
+                'Customers without accounts retrieved successfully',
+                $customers
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(500, $e->getMessage(), 'Failed to retrieve customers');
         }
     }
 
