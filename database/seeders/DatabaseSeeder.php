@@ -15,16 +15,16 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PermissionSeeder::class,
             RoleSeeder::class,
-            // PromotionSeeder::class,
-            // InventoryHistorySeeder::class,
-            // OrderStatusSeeder::class,
-            // UserSeeder::class,
-            // CategorySeeder::class,
-            // BookSeeder::class,
-            // SupplierSeeder::class,
-            // AddressTagSeeder::class,
-            // PaymentSeeder::class,
-            // BookCategorySeeder::class,
+            PromotionSeeder::class,
+            InventoryHistorySeeder::class,
+            OrderStatusSeeder::class,
+            UserSeeder::class,
+            CategorySeeder::class,
+            BookSeeder::class,
+            SupplierSeeder::class,
+            AddressTagSeeder::class,
+            PaymentSeeder::class,
+            BookCategorySeeder::class,
         ]);
     }
 }
