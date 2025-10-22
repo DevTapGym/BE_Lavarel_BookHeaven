@@ -99,6 +99,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
     });
 
     Route::prefix('/customers')->group(function () {
+        Route::get('/no-account', [CustomerController::class, 'getCustomersWithoutAccount'])->name('show.customer.without.account');
         Route::get('/', [CustomerController::class, 'indexPaginated'])->name('view.customers');
         Route::get('/{customer}', [CustomerController::class, 'show'])->name('show.customer');
         Route::post('/', [CustomerController::class, 'store'])->name('create.customer');
@@ -107,6 +108,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
     });
 
     Route::prefix('/employees')->group(function () {
+        Route::get('/no-account', [EmployeeController::class, 'getEmployeeWithoutAccount'])->name('show.employee.without.account');
         Route::get('/', [EmployeeController::class, 'indexPaginated'])->name('view.employees');
         Route::get('/{employee}', [EmployeeController::class, 'show'])->name('show.employee');
         Route::post('/', [EmployeeController::class, 'store'])->name('create.employee');

@@ -22,6 +22,11 @@ class Employee extends Model
         'hire_date' => 'date',
     ];
 
+    public function user()
+    {
+        return $this->hasOne(User::class);
+    }
+
     public function importReceipts()
     {
         return $this->hasMany(ImportReceipt::class);

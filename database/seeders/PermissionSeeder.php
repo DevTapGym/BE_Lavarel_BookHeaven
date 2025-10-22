@@ -34,12 +34,14 @@ class PermissionSeeder extends Seeder
 
             ['name' => 'view customers', 'guard_name' => 'api', 'apiPath' => '/v1/customer', 'method' => 'GET', 'module' => 'Customer'],
             ['name' => 'show customer', 'guard_name' => 'api', 'apiPath' => '/v1/customer/{customer}', 'method' => 'GET', 'module' => 'Customer'],
+            ['name' => 'show customer without account', 'guard_name' => 'api', 'apiPath' => '/v1/customer/no-account', 'method' => 'GET', 'module' => 'Customer'],
             ['name' => 'create customer', 'guard_name' => 'api', 'apiPath' => '/v1/customer', 'method' => 'POST', 'module' => 'Customer'],
             ['name' => 'update customer', 'guard_name' => 'api', 'apiPath' => '/v1/customer/{customer}', 'method' => 'PUT', 'module' => 'Customer'],
             ['name' => 'delete customer', 'guard_name' => 'api', 'apiPath' => '/v1/customer/{customer}', 'method' => 'DELETE', 'module' => 'Customer'],
 
             ['name' => 'view employees', 'guard_name' => 'api', 'apiPath' => '/v1/employee', 'method' => 'GET', 'module' => 'Employee'],
             ['name' => 'show employee', 'guard_name' => 'api', 'apiPath' => '/v1/employee/{employee}', 'method' => 'GET', 'module' => 'Employee'],
+            ['name' => 'show employee without account', 'guard_name' => 'api', 'apiPath' => '/v1/employee/no-account', 'method' => 'GET', 'module' => 'Employee'],
             ['name' => 'create employee', 'guard_name' => 'api',  'apiPath' => '/v1/employee',  'method' => 'POST',  'module' =>  'Employee'],
             ['name' =>  'update employee',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/employee',  'method'  =>  'PUT',  'module'  =>  'Employee'],
             ['name' =>  'delete employee',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/employee/{employee}',  'method'  =>  'DELETE',  'module'  =>  'Employee'],
