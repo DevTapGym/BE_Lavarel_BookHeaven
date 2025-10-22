@@ -130,6 +130,7 @@ class PermissionSeeder extends Seeder
             ['name' => 'place order for web', 'guard_name' => 'api', 'apiPath' => '/v1/order/place/web', 'method' => 'POST', 'module' => 'Order'],
             ['name' => 'update order', 'guard_name' => 'api', 'apiPath' => '/v1/order', 'method' => 'PUT', 'module' => 'Order'],
             ['name' => 'download order pdf', 'guard_name' => 'api', 'apiPath' => '/v1/order/downloadPdf/{id}', 'method' => 'GET', 'module' => 'Order'],
+            ['name' => 'return order', 'guard_name' => 'api', 'apiPath' => '/v1/order/return/{id}', 'method' => 'GET', 'module' => 'Order'],
 
             ['name' => 'view roles', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'GET', 'module' => 'Role'],
             ['name' => 'view roles no pagination', 'guard_name' => 'api', 'apiPath' => '/v1/role', 'method' => 'GET', 'module' => 'Role'],
@@ -162,6 +163,10 @@ class PermissionSeeder extends Seeder
             ['name' => 'view dashboard 6', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/view6', 'method' => 'GET', 'module' => 'Dashboard'],
             ['name' => 'view dashboard 1', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/view1', 'method' => 'GET', 'module' => 'Dashboard'],
             ['name' => 'view dashboard top 5 books sold', 'guard_name' => 'api', 'apiPath' => '/v1/dashboard/get-top5-books-sold', 'method' => 'GET', 'module' => 'Dashboard'],
+
+            ['name' => 'create promotion', 'guard_name' => 'api',  'apiPath'  =>  '/v1/promotions',  'method'  =>  'POST',  'module'  =>  'Promotion'],
+            ['name' =>  'update promotion',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/promotions/{promotion}',  'method'  =>  'PUT',  'module'  =>  'Promotion'],
+            ['name' =>  'delete promotion',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/promotions/{promotion}',  'method'  =>  'DELETE',  'module'  =>  'Promotion'],
         ];
 
         $added = false;

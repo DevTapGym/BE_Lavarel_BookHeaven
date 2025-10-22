@@ -40,6 +40,7 @@ class Promotion extends Model
         'deleted_at' => 'datetime',
         'qty_limit' => 'integer',
         'is_deleted' => 'integer',
+        'status' => 'boolean',
     ];
 
     public function orders()

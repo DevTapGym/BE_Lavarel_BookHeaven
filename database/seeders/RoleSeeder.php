@@ -59,6 +59,7 @@ class RoleSeeder extends Seeder
             'create account',
             'update account',
             'update customer',
+            'return order',
         ])->get());
         $this->command->info('Roles have been seeded successfully!');
 

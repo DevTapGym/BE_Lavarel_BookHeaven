@@ -34,6 +34,12 @@ class PermissionController extends Controller
             ])
             ->allowedSorts([
                 'created_at',
+                'updated_at',
+                'name',
+                'module',
+                'apiPath',
+                'id',
+                'method',
             ])
             ->defaultSort('-created_at')
             ->paginate($pageSize);
