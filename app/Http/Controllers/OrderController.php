@@ -73,6 +73,8 @@ class OrderController extends Controller
                 'receiverAddress' => $order->receiver_address,
                 'receiverPhone' => $order->receiver_phone,
                 'paymentMethod' => $order->payment_method ?? null,
+                'status' => $order->status,
+                'paymentStatus' => $order->payment_status,
                 'vnpTxnRef' => $order->vnp_txn_ref,
                 'createdBy' => $order->created_by ?? null,
                 'updatedBy' => $order->updated_by ?? null,
@@ -544,6 +546,8 @@ class OrderController extends Controller
                 'receiver_phone'      => $request->receiverPhone ? $request->receiverPhone : $customer->phone,
                 'promotion_id'        => $promotion ? $promotion->id : null,
                 'total_promotion_value' => $totalPromotionValue,
+                'status'              => 'completed',
+                'payment_status'      => '1',
             ]);
 
             // Tạo order items và cập nhật stock
@@ -744,6 +748,7 @@ class OrderController extends Controller
                     'total_amount'        => $totalAmount,
                     'note'                => null,
                     'shipping_fee'        => 30000,
+                    'status'              => 'wait_confirm',
                     'payment_method'     => $validated['paymentMethod'],
                     'receiver_name'      => $validated['name'],
                     'receiver_address'    => $validated['address'],
@@ -1052,8 +1057,22 @@ class OrderController extends Controller
                 'order_status_id' => $validated['statusId'],
                 'note' => $validated['note'] ?? null,
             ]);
+            $status = "processing";
+            if ($newStatus->name === "completed") {
+                $status = "completed";
+            } else if ($newStatus->name === "canceled") {
+                $status = "canceled";
+            } else if ($newStatus->name === "wait_confirm") {
+                $status = "wait_confirm";
+            }  else if ($newStatus->name === "returned") {
+                $status = "returned";
+            } else {
+                $status = "processing";
+            }
             $order->update([
                 'status_id' => $validated['statusId'],
+                'status' => $status,
+                'payment_status' => $status === "completed" ? "1" : "0",
             ]);
             return $this->successResponse(200, 'Order updated successfully', $order);
         });
@@ -1214,7 +1233,10 @@ class OrderController extends Controller
                         $orderItem->order_id = $returnOrder->id;
                         $orderItem->book_id = $book->id;
                         $orderItem->quantity = $item['quantity'];
-                        $orderItem->price = $itemPrice;
+                        $orderItem->price = $book->price;
+                        $orderItem->capital_price = $book->capital_price;
+                        $orderItem->total_price = $itemPrice;
+                        $orderItem->total_capital_price = $book->capital_price * $item['quantity'];
                         $orderItem->save();
 
                         $orderItems[] = $orderItem;
@@ -1297,6 +1319,8 @@ class OrderController extends Controller
                 }
 
                 $returnOrder->total_amount = $totalPrice;
+                $returnOrder->status = "returned";
+                $returnOrder->payment_status = "1";
                 $returnOrder->save();
 
                 $returnOrder->load(['orderItems.book', 'statusHistories.orderStatus', 'customer']);

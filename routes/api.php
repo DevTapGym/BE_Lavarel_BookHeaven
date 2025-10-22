@@ -26,6 +26,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UploadController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\InventoryHistoryController;
+use App\Http\Controllers\OrderReportController;
 
 
 // ---------------------
@@ -278,5 +279,12 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::get('/view6', [DashboardController::class, 'view6'])->name('view.dashboard.6');
         Route::get('/view1', [DashboardController::class, 'view1'])->name('view.dashboard.1');
         Route::get('/get-top5-books-sold', [DashboardController::class, 'getTop5BookSold'])->name('view.dashboard.top.5.books.sold');
+    });
+
+    Route::prefix('/reports')->group(function () {
+        // Báo cáo Đơn hàng
+        Route::get('/orders', [OrderReportController::class, 'reportByOrder'])->name('view.report.orders');
+        Route::get('/orders/export', [OrderReportController::class, 'exportOrderReport'])->name('export.report.orders');
+        Route::get('/orders/detail', [OrderReportController::class, 'orderDetailReport'])->name('view.report.orders.detail');
     });
 });
