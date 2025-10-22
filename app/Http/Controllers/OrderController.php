@@ -48,6 +48,7 @@ class OrderController extends Controller
 
     public function indexPaginated(Request $request)
     {
+        $status = $request->query('status', null);
         $pageSize = $request->query('size', 10);
         $paginator = Order::with([
             'orderItems.book.bookImages',
@@ -55,6 +56,9 @@ class OrderController extends Controller
             'promotion',
             'customer'
         ])
+            ->when($status, function ($query, $status) {
+                return $query->where('status', $status);
+            })
             ->orderBy('created_at', 'desc')
             ->paginate($pageSize);
 
