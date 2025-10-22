@@ -8,6 +8,7 @@ use Throwable;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
+use Exception;
 
 
 class EmployeeController extends Controller
@@ -19,6 +20,22 @@ class EmployeeController extends Controller
             'Employee retrieved successfully',
             $employee
         );
+    }
+
+    public function getEmployeeWithoutAccount()
+    {
+        try {
+            // Lấy danh sách employee chưa có user liên kết
+            $employee = Employee::whereDoesntHave('user')->get();
+
+            return $this->successResponse(
+                200,
+                'Customers without accounts retrieved successfully',
+                $employee
+            );
+        } catch (Exception $e) {
+            return $this->errorResponse(500, $e->getMessage(), 'Failed to retrieve customers');
+        }
     }
 
     public function indexPaginated(Request $request)
