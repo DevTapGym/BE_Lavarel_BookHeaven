@@ -245,9 +245,9 @@ class OrderReportController extends Controller
                 ->whereBetween('created_at', [$start, $end])
                 ->where('payment_status', '1');
 
-            // if ($orderStatus != null) {
-            //     $query->where('status', $orderStatus);
-            // }
+            if ($orderStatus != null) {
+                $query->where('status', $orderStatus);
+            }
 
             $orders = $query->orderBy('created_at', 'desc')
                 ->limit($limit)
