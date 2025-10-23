@@ -43,7 +43,7 @@ class EmployeeController extends Controller
         try {
             $pageSize = $request->query('size', 10);
 
-            $paginator = QueryBuilder::for(\App\Models\Employee::class)
+            $paginator = QueryBuilder::for(Employee::with('user.roles'))
                 ->allowedFilters([
                     // Lọc gần đúng theo các trường chính
                     AllowedFilter::partial('name'),

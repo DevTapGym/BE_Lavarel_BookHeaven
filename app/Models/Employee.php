@@ -31,4 +31,9 @@ class Employee extends Model
     {
         return $this->hasMany(ImportReceipt::class);
     }
+
+    public function primaryRole()
+    {
+        return $this->user?->roles()->first()?->name;
+    }
 }
