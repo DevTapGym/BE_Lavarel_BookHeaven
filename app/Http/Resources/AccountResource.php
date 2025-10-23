@@ -25,6 +25,14 @@ class AccountResource extends JsonResource
             'avatar' => $user->avatar,
             'phone' => $customer?->phone,
             'role' => $user->roles()->pluck('name')->first(),
+            'employee' => $user->employee ? [
+                'id' => $user->employee->id,
+                'name' => $user->employee->name,
+                'address' => $user->employee->address,
+                'phone' => $user->employee->phone,
+                'email' => $user->employee->email,
+                'dateOfBirth' => $user->employee->date_of_birth
+            ] : null,
             'customer' => $customer ? [
                 'id' => $customer->id,
                 'name' => $customer->name,

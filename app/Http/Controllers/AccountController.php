@@ -41,8 +41,11 @@ class AccountController extends Controller
 
                     // Lọc theo tên vai trò (role name)
                     AllowedFilter::callback('role', function ($query, $value) {
-                        $query->whereHas('roles', function ($q) use ($value) {
-                            $q->where('name', 'like', "%{$value}%");
+                        // $value có thể là chuỗi hoặc mảng. Ví dụ: ?filter[role][]=ADMIN&filter[role][]=EMPLOYEE
+                        $roles = is_array($value) ? $value : explode(',', $value);
+
+                        $query->whereHas('roles', function ($q) use ($roles) {
+                            $q->whereIn('name', $roles);
                         });
                     }),
                 ])

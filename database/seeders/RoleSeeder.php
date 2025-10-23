@@ -106,6 +106,9 @@ class RoleSeeder extends Seeder
             'view accounts',
             'show account',
 
+            'complete import receipt',
+            'return import receipt',
+
         ])->get());
         $this->command->info('Roles have been seeded successfully!');
 

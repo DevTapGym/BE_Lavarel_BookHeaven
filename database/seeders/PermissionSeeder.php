@@ -96,6 +96,8 @@ class PermissionSeeder extends Seeder
             ['name' => 'show import receipt', 'guard_name' => 'api', 'apiPath' => '/v1/import-receipt/{import_receipt}', 'method' => 'GET', 'module' => 'ImportReceipt'],
             ['name' => 'create import receipt', 'guard_name' => 'api', 'apiPath' => '/v1/import-receipt', 'method' => 'POST', 'module' => 'ImportReceipt'],
             ['name' => 'update import receipt', 'guard_name' => 'api', 'apiPath' => '/v1/import-receipt', 'method' => 'PUT', 'module' => 'ImportReceipt'],
+            ['name' => 'complete import receipt', 'guard_name' => 'api', 'apiPath' => '/v1/import-receipt/complete/{id}', 'method' => 'POST', 'module' => 'ImportReceipt'],
+            ['name' => 'return import receipt', 'guard_name' => 'api', 'apiPath' => '/v1/import-receipt/return/{id}', 'method' => 'POST', 'module' => 'ImportReceipt'],
 
             ['name' => 'view address tags', 'guard_name' => 'api', 'apiPath' => '/v1/address-tag', 'method' => 'GET', 'module' => 'AddressTag'],
             ['name' => 'create address tag', 'guard_name' => 'api', 'apiPath' => '/v1/address-tag', 'method' => 'POST', 'module' => 'AddressTag'],
