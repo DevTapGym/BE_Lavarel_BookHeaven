@@ -138,6 +138,10 @@ class AuthController extends Controller
         $existingUser = User::where('email', $email)->first();
 
         if ($existingUser) {
+            if (empty($existingUser->avatar) && !empty($request->avatar)) {
+                $existingUser->avatar = $request->avatar;
+                $existingUser->save();
+            }
             // Nếu user đã tồn tại → cho đăng nhập luôn
             $role = $existingUser->roles()->pluck('name')->first() ?? 'user';
             $customClaims = [
