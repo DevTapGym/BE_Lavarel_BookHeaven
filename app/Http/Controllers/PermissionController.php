@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 
@@ -143,6 +144,32 @@ class PermissionController extends Controller
             200,
             'Permission deleted successfully',
             null
+        );
+    }
+
+    public function getPermissionsByRoleName(Request $request)
+    {
+        $validated = $request->validate([
+            'roleName' => 'required|string|max:255',
+        ]);
+
+        // Tìm role theo tên
+        $role = Role::where('name', $validated['roleName'])->first();
+
+        if (!$role) {
+            return $this->errorResponse(
+                404,
+                'Not Found',
+                'Role not found'
+            );
+        }
+
+        $permissions = $role->permissions;
+
+        return $this->successResponse(
+            200,
+            "Permissions for role '{$validated['roleName']}' retrieved successfully",
+            $permissions
         );
     }
 }
