@@ -21,8 +21,13 @@ class ImportReceiptController extends Controller
 {
     public function indexPaginated(Request $request)
     {
+        $status = $request->query('status', null);
+
         $pageSize = $request->query('size', 10);
         $paginator = ImportReceipt::with(['employee', 'importReceiptDetails.supply.book'])
+            ->when($status, function ($query, $status) {
+                    return $query->where('status', $status);
+                })
             ->paginate($pageSize);
 
         $paginator->setCollection(
