@@ -47,6 +47,7 @@ class BookController extends Controller
                     AllowedFilter::partial('title'),
                     AllowedFilter::partial('mainText', 'title'),
                     AllowedFilter::partial('author'),
+                    AllowedFilter::partial('barcode'),
 
                     // Lọc theo tên thể loại
                     AllowedFilter::callback('category', function ($query, $value) {
@@ -80,6 +81,7 @@ class BookController extends Controller
                     'price',
                     'title',
                     'author',
+                    'barcode',
                 ])
                 ->defaultSort('-sold') // Mặc định sort
                 ->with(['categories', 'bookImages'])
@@ -261,6 +263,7 @@ class BookController extends Controller
         try {
             $validated = $request->validate([
                 'title'          => 'required|string|max:255',
+                'barcode'        => 'nullable|string|max:100|unique:books,barcode',
                 'author'         => 'required|string|max:255',
                 'price'          => 'required|numeric|min:0',
                 'description'    => 'nullable|string',
@@ -317,6 +320,7 @@ class BookController extends Controller
             $validated = $request->validate([
                 'id'             => 'required|exists:books,id',
                 'title'          => 'sometimes|string|max:255',
+                'barcode'        => 'sometimes|string|max:100|unique:books,barcode,' . $request->input('id'),
                 'author'         => 'sometimes|string|max:255',
                 'price'          => 'sometimes|numeric|min:0',
                 'description'    => 'nullable|string',
@@ -579,6 +583,7 @@ class BookController extends Controller
             // Set headers
             $headers = [
                 'Tên sách',
+                'Mã vạch',
                 'Giá bán',
                 'Số lượng tồn',
                 'Tác giả',
@@ -604,18 +609,19 @@ class BookController extends Controller
                 $imageUrls = $book->bookImages->pluck('url')->filter()->join(';');
 
                 $sheet->setCellValue('A' . $row, $book->title);
-                $sheet->setCellValue('B' . $row, $book->price);
-                $sheet->setCellValue('C' . $row, $book->quantity);
-                $sheet->setCellValue('D' . $row, $book->author);
-                $sheet->setCellValue('E' . $row, $categoryNames);
-                $sheet->setCellValue('F' . $row, $book->thumbnail);
-                $sheet->setCellValue('G' . $row, $imageUrls);
+                $sheet->setCellValue('B' . $row, $book->barcode);
+                $sheet->setCellValue('C' . $row, $book->price);
+                $sheet->setCellValue('D' . $row, $book->quantity);
+                $sheet->setCellValue('E' . $row, $book->author);
+                $sheet->setCellValue('F' . $row, $categoryNames);
+                $sheet->setCellValue('G' . $row, $book->thumbnail);
+                $sheet->setCellValue('H' . $row, $imageUrls);
 
                 $row++;
             }
 
             // Auto size columns
-            foreach (range('A', 'G') as $col) {
+            foreach (range('A', 'H') as $col) {
                 $sheet->getColumnDimension($col)->setAutoSize(true);
             }
 
@@ -695,17 +701,27 @@ class BookController extends Controller
                     }
 
                     $mainText = trim($row[0] ?? '');
-                    $price = $row[1] ?? null;
-                    $quantity = $row[2] ?? null;
-                    $author = trim($row[3] ?? '');
-                    $categoryName = trim($row[4] ?? '');
-                    $thumbnail = trim($row[5] ?? '');
-                    $imageUrls = trim($row[6] ?? '');
+                    $barcode = trim($row[1] ?? '');
+                    $price = $row[2] ?? null;
+                    $quantity = $row[3] ?? null;
+                    $author = trim($row[4] ?? '');
+                    $categoryName = trim($row[5] ?? '');
+                    $thumbnail = trim($row[6] ?? '');
+                    $imageUrls = trim($row[7] ?? '');
 
                     // Validate dữ liệu
                     if (empty($mainText)) {
                         $errors[] = "Dòng {$rowNumber}: Tên sách không được để trống";
                         continue;
+                    }
+
+                    // Kiểm tra barcode trùng lặp nếu có
+                    if (!empty($barcode)) {
+                        $existingBook = Book::where('barcode', $barcode)->first();
+                        if ($existingBook) {
+                            $errors[] = "Dòng {$rowNumber}: Mã vạch '{$barcode}' đã tồn tại";
+                            continue;
+                        }
                     }
 
                     if (!is_numeric($price) || $price <= 0) {
@@ -748,6 +764,7 @@ class BookController extends Controller
                     // Tạo Book
                     $book = Book::create([
                         'title' => $mainText,
+                        'barcode' => !empty($barcode) ? $barcode : null,
                         'price' => $price,
                         'quantity' => $quantity,
                         'author' => $author,
