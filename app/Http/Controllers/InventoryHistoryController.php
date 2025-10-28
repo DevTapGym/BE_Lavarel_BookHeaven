@@ -21,6 +21,15 @@ class InventoryHistoryController extends Controller
             $query->where('type', $request->query('type'));
         }
 
+        // Filter by date range: startDate and endDate
+        if ($request->filled('startDate')) {
+            $query->whereDate('transaction_date', '>=', $request->query('startDate'));
+        }
+
+        if ($request->filled('endDate')) {
+            $query->whereDate('transaction_date', '<=', $request->query('endDate'));
+        }
+
         // filter=name~'keyword' to search by book title (via relation)
         $rawFilter = $request->query('filter');
         if (!empty($rawFilter)) {
