@@ -167,8 +167,7 @@ class DashBoardController extends Controller
 
                 $monthRevenue = Order::whereHas('statusHistories', function ($query) {
                     $query->whereHas('orderStatus', function ($statusQuery) {
-                        $statusQuery->where('name', 'Delivered')
-                            ->where('sequence', 4);
+                        $statusQuery->where('sequence', 7);
                     });
                 })
                     ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
@@ -177,8 +176,7 @@ class DashBoardController extends Controller
 
                 $monthOrderCount = Order::whereHas('statusHistories', function ($query) {
                     $query->whereHas('orderStatus', function ($statusQuery) {
-                        $statusQuery->where('name', 'Delivered')
-                            ->where('sequence', 4);
+                        $statusQuery->where('sequence', 7);
                     });
                 })
                     ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
@@ -199,14 +197,6 @@ class DashBoardController extends Controller
             $data = [
                 'year' => $year,
                 'monthly_data' => $monthlyRevenue,
-                'summary' => [
-                    'total_revenue' => (float) $totalYearRevenue,
-                    'total_orders' => $totalYearOrders,
-                    'average_monthly_revenue' => round($totalYearRevenue / 12, 2),
-                    'average_order_value' => $totalYearOrders > 0 ? round($totalYearRevenue / $totalYearOrders, 2) : 0,
-                    'best_month' => collect($monthlyRevenue)->sortByDesc('revenue')->first(),
-                    'worst_month' => collect($monthlyRevenue)->sortBy('revenue')->first()
-                ],
                 'timestamp' => now()->toISOString()
             ];
 

@@ -248,7 +248,7 @@ Route::prefix('/v1')->middleware(['jwt.auth', 'check.permission', 'active'])->gr
         Route::get('/', [PermissionController::class, 'indexPaginated'])->name('view.permissions');
         Route::get('/permissions-no-pagination', [PermissionController::class, 'index'])->name('view.permissions.no.pagination');
         Route::get('/permissions-name', [PermissionController::class, 'showByName'])->name('show.permission.by.name');
-        Route::get('/by-role', [PermissionController::class, 'getPermissionsByRoleName'])->name('get.permissions.by.role.name');
+        Route::get('/by-role', [PermissionController::class, 'getPermissionsByRoleName'])->name('view.permissions.by.role.name');
         Route::get('/{id}', [PermissionController::class, 'showById'])->name('show.permission.by.id');
         Route::post('/', [PermissionController::class, 'store'])->name('create.permission');
         Route::put('/', [PermissionController::class, 'update'])->name('update.permission');
