@@ -146,10 +146,11 @@ class PermissionSeeder extends Seeder
             ['name' =>  'view permissions',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions',  'method'  =>  'GET',  'module'  =>  'Permission'],
             ['name' =>  'view permissions no pagination',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions/permissions-no-pagination',  'method'  =>  'GET',  'module'  =>  'Permission'],
             ['name' =>  'show permission by id',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions/id',  'method'  =>  'GET',  'module'  =>  'Permission'],
-            ['name' =>  'show permission by name',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions//permissions-name',  'method'  =>  'GET',  'module'  =>  'Permission'],
+            ['name' =>  'show permission by name',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions/permissions-name',  'method'  =>  'GET',  'module'  =>  'Permission'],
             ['name' =>  'create permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions',  'method'  =>  'POST',  'module'  =>  'Permission'],
             ['name' =>  'update permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions',  'method'  =>  'PUT',  'module'  =>  'Permission'],
             ['name' =>  'delete permission',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions/{permission}',  'method'  =>  'DELETE',  'module'  =>  'Permission'],
+            ['name' =>  'view permissions by rolename',  'guard_name'  =>  'api',  'apiPath'  =>  '/v1/permissions/by-role',  'method'  =>  'GET',  'module'  =>  'Permission'],
 
             ['name' => 'view accounts', 'guard_name' => 'api', 'apiPath' => '/v1/account', 'method' => 'GET', 'module' => 'Account'],
             ['name' => 'show account', 'guard_name' => 'api', 'apiPath' => '/v1/account/{user}', 'method' => 'GET', 'module' => 'Account'],
