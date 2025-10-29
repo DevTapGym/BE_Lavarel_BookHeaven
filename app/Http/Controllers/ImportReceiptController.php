@@ -26,8 +26,9 @@ class ImportReceiptController extends Controller
         $pageSize = $request->query('size', 10);
         $paginator = ImportReceipt::with(['employee', 'importReceiptDetails.supply.book'])
             ->when($status, function ($query, $status) {
-                    return $query->where('status', $status);
-                })
+                return $query->where('status', $status);
+            })
+            ->orderBy('created_at', 'desc')
             ->paginate($pageSize);
 
         $paginator->setCollection(
@@ -109,7 +110,7 @@ class ImportReceiptController extends Controller
                     ->firstOrFail();
 
                 $price = $supply->supply_price;
-                
+
                 ImportReceiptDetail::create([
                     'import_receipt_id' => $importReceipt->id,
                     'supply_id' => $supply->id,
@@ -194,7 +195,7 @@ class ImportReceiptController extends Controller
             return DB::transaction(function () use ($id) {
                 // Tìm phiếu nhập
                 $importReceipt = ImportReceipt::with(['importReceiptDetails.supply.book'])->find($id);
-                
+
                 if (!$importReceipt) {
                     return $this->errorResponse(404, 'Not Found', 'Import receipt not found');
                 }

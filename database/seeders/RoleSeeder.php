@@ -104,7 +104,7 @@ class RoleSeeder extends Seeder
             'create import receipt',
             'update import receipt',
 
-            'view accounts',
+            //'view accounts',
             'show account',
 
             'complete import receipt',

@@ -320,7 +320,7 @@ class BookController extends Controller
             $validated = $request->validate([
                 'id'             => 'required|exists:books,id',
                 'title'          => 'sometimes|string|max:255',
-                'barcode'        => 'sometimes|string|max:100|unique:books,barcode,' . $request->input('id'),
+                'barcode'        => 'nullable|sometimes|string|max:100|unique:books,barcode,' . $request->input('id'),
                 'author'         => 'sometimes|string|max:255',
                 'price'          => 'sometimes|numeric|min:0',
                 'description'    => 'nullable|string',
@@ -604,7 +604,7 @@ class BookController extends Controller
             foreach ($books as $book) {
                 // Lấy tên categories (nhiều-nhiều)
                 $categoryNames = $book->categories->pluck('name')->join(', ');
-                
+
                 // Lấy URLs của bookImages và ghép bằng dấu chấm phẩy
                 $imageUrls = $book->bookImages->pluck('url')->filter()->join(';');
 
@@ -630,14 +630,14 @@ class BookController extends Controller
 
             // Tạo writer và lưu vào temporary buffer
             $writer = new Xlsx($spreadsheet);
-            
+
             // Lưu vào temporary file
             $temp_file = tempnam(sys_get_temp_dir(), 'excel_');
             $writer->save($temp_file);
-            
+
             // Đọc nội dung file
             $fileContent = file_get_contents($temp_file);
-            
+
             // Xóa temporary file
             unlink($temp_file);
 
@@ -646,7 +646,6 @@ class BookController extends Controller
                 ->header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
                 ->header('Content-Disposition', 'attachment; filename="' . $fileName . '"')
                 ->header('Cache-Control', 'max-age=0');
-
         } catch (Throwable $th) {
             return $this->errorResponse(
                 500,
@@ -669,7 +668,7 @@ class BookController extends Controller
             ]);
 
             $file = $request->file('file');
-            
+
             if (!$file || !$file->isValid()) {
                 return $this->errorResponse(
                     400,
@@ -780,7 +779,7 @@ class BookController extends Controller
                     // Tạo BookImages nếu có
                     if (!empty($imageUrls)) {
                         $urls = array_map('trim', explode(';', $imageUrls));
-                        
+
                         foreach ($urls as $url) {
                             if (!empty($url)) {
                                 BookImage::create([
@@ -794,7 +793,6 @@ class BookController extends Controller
                     // Load relationships để trả về
                     $book->load(['categories', 'bookImages']);
                     $importedBooks[] = $book;
-
                 } catch (Exception $e) {
                     $errors[] = "Dòng {$rowNumber}: " . $e->getMessage();
                     continue;
@@ -829,7 +827,6 @@ class BookController extends Controller
                 'Import sách thành công! Đã import ' . count($importedBooks) . ' cuốn sách.',
                 $importedBooks
             );
-
         } catch (Throwable $th) {
             DB::rollBack();
             return $this->errorResponse(
