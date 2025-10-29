@@ -176,8 +176,7 @@ class DashBoardController extends Controller
 
                 $monthOrderCount = Order::whereHas('statusHistories', function ($query) {
                     $query->whereHas('orderStatus', function ($statusQuery) {
-                        $statusQuery->where('name', 'Delivered')
-                            ->where('sequence', 4);
+                        $statusQuery->where('sequence', 7);
                     });
                 })
                     ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
