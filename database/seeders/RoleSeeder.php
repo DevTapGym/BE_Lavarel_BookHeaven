@@ -136,6 +136,9 @@ class RoleSeeder extends Seeder
             'create customer',
             'download order pdf',
             'create order for web',
+            'view order statuses',
+            'view orders',
+            'update order'
         ])->get());
         $this->command->info('Roles have been seeded successfully!');
     }
