@@ -60,7 +60,7 @@ class RoleSeeder extends Seeder
             'update account',
             'update customer',
             'return order',
-            'view permissions by rolename',
+            'get permissions by role name',
         ])->get());
         $this->command->info('Roles have been seeded successfully!');
 
@@ -109,7 +109,7 @@ class RoleSeeder extends Seeder
 
             'complete import receipt',
             'return import receipt',
-            'view permissions by rolename',
+            'get permissions by role name',
         ])->get());
         $this->command->info('Roles have been seeded successfully!');
 
@@ -137,7 +137,7 @@ class RoleSeeder extends Seeder
             'create customer',
             'download order pdf',
             'create order for web',
-            'view permissions by rolename',
+            'get permissions by role name',
         ])->get());
         $this->command->info('Roles have been seeded successfully!');
     }
